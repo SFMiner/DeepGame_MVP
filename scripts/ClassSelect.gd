@@ -171,9 +171,9 @@ func _on_confirm() -> void:
 	GameState.player_data = pd
 	get_tree().change_scene_to_file(GAME_SCENE)
 
-func _get_default_spells(class_name: String) -> Array[SpellData]:
+func _get_default_spells(cls_name: String) -> Array[SpellData]:
 	var result: Array[SpellData] = []
-	match class_name:
+	match cls_name:
 		"Warrior":
 			result.append(load("res://resources/fireball_spell.tres") as SpellData)
 		"Ranger":
