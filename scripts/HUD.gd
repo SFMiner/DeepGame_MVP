@@ -436,6 +436,7 @@ func _input(event: InputEvent) -> void:
 				btn.visible = false
 			for label: Label in _spell_labels:
 				label.visible = false
+			return
 		_pause_open = not _pause_open
 		_pause_panel.visible = _pause_open
 		_settings_panel.visible = false
