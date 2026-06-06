@@ -28,6 +28,7 @@ var _active_statuses: Array[StatusEffect] = []
 var _status_timers: Array[float] = []
 var _knockback_velocity: Vector2 = Vector2.ZERO
 var _melee_hitbox: Area2D
+var _input_direction: Vector2 = Vector2.ZERO
 
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var _collision_shape: CollisionShape2D = $CollisionShape2D
@@ -61,6 +62,16 @@ func _setup_melee_hitbox() -> void:
 	_melee_hitbox.monitoring = false
 	call_deferred("add_child", _melee_hitbox)
 
+func _input(event: InputEvent) -> void:
+	if event.is_action("move_left"):
+		_input_direction.x = -1.0 if event.is_pressed() else (0.0 if _input_direction.x < 0 else _input_direction.x)
+	elif event.is_action("move_right"):
+		_input_direction.x = 1.0 if event.is_pressed() else (0.0 if _input_direction.x > 0 else _input_direction.x)
+	elif event.is_action("move_up"):
+		_input_direction.y = -1.0 if event.is_pressed() else (0.0 if _input_direction.y < 0 else _input_direction.y)
+	elif event.is_action("move_down"):
+		_input_direction.y = 1.0 if event.is_pressed() else (0.0 if _input_direction.y > 0 else _input_direction.y)
+
 func _physics_process(delta: float) -> void:
 	if _is_dead:
 		velocity = Vector2.ZERO
@@ -72,8 +83,7 @@ func _physics_process(delta: float) -> void:
 	_process_spell_cooldowns(delta)
 
 	if _atk_state == AtkState.IDLE or _atk_state == AtkState.STRIKE:
-		var direction: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
-		velocity = direction * get_effective_speed()
+		velocity = _input_direction * get_effective_speed()
 	else:
 		velocity = Vector2.ZERO
 
@@ -433,7 +443,7 @@ func _load_spritesheet(frames: SpriteFrames, anim_base: String, path: String, fr
 			frames.add_frame(anim_name, atlas)
 
 func _get_direction() -> int:
-	var inp: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var inp: Vector2 = _input_direction
 	if inp.length() < 0.1:
 		return _last_facing
 	if abs(inp.x) >= abs(inp.y):
