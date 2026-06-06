@@ -169,8 +169,8 @@ func _create_ui() -> void:
 	_victory_panel.add_child(_victory_restart_button)
 
 	_inventory_panel = Panel.new()
-	_inventory_panel.position = Vector2(320, 10)
-	_inventory_panel.size = Vector2(450, 320)
+	_inventory_panel.position = Vector2(530, 4)
+	_inventory_panel.size = Vector2(266, 280)
 	_inventory_panel.modulate = Color(0, 0, 0, 0.7)
 	_inventory_panel.visible = false
 	add_child(_inventory_panel)
@@ -182,35 +182,35 @@ func _create_ui() -> void:
 
 func _create_equip_panel() -> void:
 	_equip_panel = Panel.new()
-	_equip_panel.position = Vector2(330, 20)
-	_equip_panel.size = Vector2(160, 280)
+	_equip_panel.position = Vector2(535, 10)
+	_equip_panel.size = Vector2(110, 250)
 	_equip_panel.modulate = Color(0.1, 0.1, 0.1, 0.8)
 	add_child(_equip_panel)
 
 	var title: Label = Label.new()
 	title.text = "Equipment"
-	title.position = Vector2(340, 22)
+	title.position = Vector2(540, 12)
 	title.add_theme_color_override("font_color", Color.YELLOW)
-	title.add_theme_font_size_override("font_size", 14)
+	title.add_theme_font_size_override("font_size", 12)
 	add_child(title)
 
 	var slots: Array[Dictionary] = [
-		{"slot": "weapon", "label": "Weapon", "y": 50, "types": "WEAPON/BOW/STAFF"},
-		{"slot": "armor", "label": "Armor", "y": 140, "types": "ARMOR/SHIELD"},
-		{"slot": "accessory", "label": "Accessory", "y": 230, "types": "ACCESSORY"},
+		{"slot": "weapon", "label": "Weapon", "y": 35},
+		{"slot": "armor", "label": "Armor", "y": 115},
+		{"slot": "accessory", "label": "Acc.", "y": 195},
 	]
 	for slot_info: Dictionary in slots:
 		var slot_label: Label = Label.new()
 		slot_label.text = slot_info["label"]
-		slot_label.position = Vector2(340, slot_info["y"])
+		slot_label.position = Vector2(540, slot_info["y"])
 		slot_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7, 1.0))
-		slot_label.add_theme_font_size_override("font_size", 12)
+		slot_label.add_theme_font_size_override("font_size", 10)
 		add_child(slot_label)
 
 		var btn: Button = Button.new()
 		btn.text = "(empty)"
-		btn.position = Vector2(340, slot_info["y"] + 18)
-		btn.size = Vector2(140, 50)
+		btn.position = Vector2(540, slot_info["y"] + 14)
+		btn.size = Vector2(100, 44)
 		btn.pressed.connect(_on_equip_slot_clicked.bind(slot_info["slot"]))
 		btn.mouse_entered.connect(_on_equip_slot_hover.bind(slot_info["slot"]))
 		btn.mouse_exited.connect(_on_tooltip_hide)
@@ -219,33 +219,33 @@ func _create_equip_panel() -> void:
 
 func _create_inventory_grid() -> void:
 	_inventory_grid = GridContainer.new()
-	_inventory_grid.position = Vector2(500, 20)
-	_inventory_grid.size = Vector2(260, 260)
-	_inventory_grid.columns = 4
+	_inventory_grid.position = Vector2(650, 10)
+	_inventory_grid.size = Vector2(140, 250)
+	_inventory_grid.columns = 2
 	add_child(_inventory_grid)
 
 func _create_spell_bar() -> void:
 	_spell_bar_panel = Panel.new()
-	_spell_bar_panel.position = Vector2(330, 310)
-	_spell_bar_panel.size = Vector2(430, 16)
+	_spell_bar_panel.position = Vector2(535, 270)
+	_spell_bar_panel.size = Vector2(255, 14)
 	_spell_bar_panel.modulate = Color(0.05, 0.05, 0.15, 0.8)
 	add_child(_spell_bar_panel)
 
 	for i: int in range(3):
 		var label: Label = Label.new()
-		label.text = "Spell " + str(i + 1) + ": -"
-		label.position = Vector2(335 + i * 140, 311)
+		label.text = str(i + 1) + ": -"
+		label.position = Vector2(538 + i * 85, 271)
 		label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.8, 1.0))
-		label.add_theme_font_size_override("font_size", 11)
+		label.add_theme_font_size_override("font_size", 10)
 		add_child(label)
 		_spell_labels.append(label)
 
 func _create_tooltip() -> void:
 	_tooltip_label = Label.new()
-	_tooltip_label.position = Vector2(330, 270)
-	_tooltip_label.size = Vector2(430, 36)
+	_tooltip_label.position = Vector2(535, 260)
+	_tooltip_label.size = Vector2(255, 14)
 	_tooltip_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.7, 1.0))
-	_tooltip_label.add_theme_font_size_override("font_size", 11)
+	_tooltip_label.add_theme_font_size_override("font_size", 10)
 	_tooltip_label.visible = false
 	add_child(_tooltip_label)
 	_create_pause_panel()
@@ -463,7 +463,7 @@ func _refresh_inventory() -> void:
 		var item: ItemData = items[i]
 		var btn: Button = Button.new()
 		btn.text = item.item_name
-		btn.size = Vector2(62, 62)
+		btn.size = Vector2(68, 50)
 		btn.mouse_entered.connect(_on_item_hover.bind(item))
 		btn.mouse_exited.connect(_on_tooltip_hide)
 		btn.pressed.connect(_on_item_clicked.bind(i))
