@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CharacterClass" load_steps=2 format=3 uid="uid://cwar000001"]
+
+[ext_resource type="Script" uid="uid://cchcl000001" path="res://scripts/CharacterClass.gd" id="1_class"]
+
+[resource]
+script = ExtResource("1_class")
+class_name = "Warrior"
+description = "Strong melee fighter. High HP and attack, low mana."
+hp_per_level = 12
+attack_per_level = 3
+defense_per_level = 2
+mana_per_level = 2
+available_spells = Array[SpellData]([])
+sprite_set = "Beastmaster"
+crit_chance_bonus = 0.05

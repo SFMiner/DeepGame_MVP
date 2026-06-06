@@ -1,7 +1,9 @@
 # AGENTS.md - Basic RPG Project
 
 ## Project Overview
-A foundational 2D Computer RPG (CRPG) prototype built in Godot 4.5 with GDScript 2.0. Features modular architecture with signal-driven event bus, custom Resource data classes, bump-combat mechanics, ranged projectile enemies, inventory system with manual item usage, floating damage numbers, game-over/victory flow, and minimalist UI. Currently at **MVP1 state**.
+A foundational 2D Computer RPG (CRPG) prototype built in Godot 4.5 with GDScript 2.0. Features modular architecture with signal-driven event bus, custom Resource data classes, bump-combat mechanics, ranged projectile enemies, inventory system with manual item usage, floating damage numbers, game-over/victory flow, and minimalist UI. Currently in **MVP2-Lite implementation** (Phase A+C complete).
+
+**MVP2-Lite goals**: Deliberate melee/ranged/magic combat, equipment slots, class system, splash/menu flow, tilemap-based dungeon room, audio (music+SFX), permadeath toggle. See `mvp2_implementation_plan.md` for the full phased plan.
 
 ## Tech Stack
 - Godot 4.5 (GL Compatibility renderer)
@@ -9,34 +11,44 @@ A foundational 2D Computer RPG (CRPG) prototype built in Godot 4.5 with GDScript
 - No external assets (procedural placeholders for sprites)
 
 ## Architecture
-- **EventBus** (autoload): Global signal hub — 12 signals for decoupled communication
-- **GameState** (autoload): Persistent dictionary for story/quest flags, defeat counter
-- **CharacterStats**: Custom Resource for HP, Level, XP, Attack, Defense
-- **ItemData**: Custom Resource for inventory items (CONSUMABLE, WEAPON, ARMOR, QUEST enum)
+- **EventBus** (autoload): Global signal hub — 16 signals for decoupled communication
+- **GameState** (autoload): Persistent dictionary for story/quest flags, defeat counter, permadeath toggle
+- **MusicManager** (autoload): Plays and crossfades between exploration/combat music; plays SFX on events
+- **CharacterStats**: Custom Resource for HP, Mana, Level, XP, Attack, Defense, Crit
+- **ItemData**: Custom Resource for inventory items (CONSUMABLE, WEAPON, ARMOR, QUEST, BOW, STAFF, SHIELD, ACCESSORY enum)
+- **PlayerData**: Custom Resource — canonical serializable container for all player state (name, class, level, base stats, equipment slots, inventory, gold, spells, dungeon depth, flags)
+- **ProjectileData**: Custom Resource — unified projectile params (damage, speed, range, color, sprite, pierce, element)
+- **StatusEffect**: Custom Resource — POISON/SLOW/STUN with duration, tick damage, speed multiplier
+- **SpellData**: Custom Resource — spell name, mana cost, cooldown, ProjectileData ref, StatusEffect on-hit
+- **CharacterClass**: Custom Resource — class name, stat-per-level, available_spells, sprite_set
 - **Player.gd**: CharacterBody2D with CharacterStats, inventory array, item usage, is_dead guard
 - **Enemy.gd**: CharacterBody2D with CharacterStats, 5-state FSM (IDLE, WANDERING, CHASING, FLEEING, KITING), melee/ranged/passive categories, is_dead guard + queue_free on death
 - **HUD**: CanvasLayer — programmatic UI (HP/XP bars, event log, defeat counter, game-over/victory overlays, inventory panel)
 - **Main.gd**: Scene controller — wires floating damage to damage_dealt, tracks win condition (all enemies defeated), deferred enemy counting
 - **ItemPickup.gd**: Area2D pickup — tracks nearby player via body_entered/body_exited, exposes item_data
-- **FloatingDamage.gd**: Label — floats upward, fades out, color-coded by damage amount
+- **FloatingDamage.gd**: Label — floats upward, fades out, color-coded by damage amount (gold for crits)
 - **Projectile.gd**: Area2D — fired by RANGED enemies, collides with Player, carries damage+attacker_name
 
-## EventBus Signals (12 total)
+## EventBus Signals (16 total)
 | Signal | Params | Emitted By |
 |--------|--------|------------|
 | `player_hp_changed` | current_hp: int, max_hp: int | Player |
 | `player_xp_changed` | current_xp: int, xp_to_next: int | Player |
 | `player_leveled_up` | new_level: int | Player |
 | `player_died` | — | Player |
+| `player_mana_changed` | current_mana: int, max_mana: int | Player |
 | `combat_event` | message: String | Main |
-| `damage_dealt` | attacker_name, defender_name, damage: int, world_position: Vector2 | Player, Enemy, Projectile |
+| `damage_dealt` | attacker_name, defender_name, damage: int, world_position: Vector2, is_crit: bool | Player, Enemy, Projectile |
 | `item_picked_up` | item_name: String | Player |
 | `game_message` | message: String | Player, Enemy |
 | `enemy_defeated` | enemy_name: String | Player |
 | `all_enemies_defeated` | — | Main |
+| `status_applied` | target_name: String, effect_type: int | Player, Enemy |
+| `gold_collected` | amount: int | Player, Enemy |
+| `enemy_aggro_changed` | in_combat: bool | Enemy |
 
 ## Inventory & Item System
-- **ItemData Resource**: 4 item types (CONSUMABLE=0, WEAPON=1, ARMOR=2, QUEST=3). Fields: item_name, item_description, health_restore, attack_bonus, defense_bonus, value.
+- **ItemData Resource**: 8 item types (CONSUMABLE=0, WEAPON=1, ARMOR=2, QUEST=3, BOW=4, STAFF=5, SHIELD=6, ACCESSORY=7). Fields: item_name, item_description, health_restore, attack_bonus, defense_bonus, value, equip_slot, block_chance, mana_bonus, max_hp_bonus.
 - **Pickup**: Walk near green diamond → press E → `ItemPickup.body_entered` tracks nearby items in Player._nearby_items → `_try_pickup_item()` pops and calls add_item().
 - **No auto-use on pickup**: Items go straight to inventory. Heal potions must be manually used.
 - **Usage**: Press I for inventory panel → numbered list → press 1-9 to use item at that index.
@@ -47,13 +59,33 @@ A foundational 2D Computer RPG (CRPG) prototype built in Godot 4.5 with GDScript
 - **World items** (main.tscn): Health Potion (0,-40), Iron Sword (60,-40), Leather Armor (-60,-40), Strange Key (120,-40).
 
 ## Combat Mechanics
-- **Bump-combat**: Player collides with MELEE enemy → `_attack_enemy()` fires. Both have attack cooldowns.
+- **Bump-combat (MVP1, to be replaced)**: Player collides with MELEE enemy → `_attack_enemy()` fires. Both have attack cooldowns.
+- **MVP2-Lite (Phase E pending)**: Deliberate melee (Z key with windup/strike/recovery), ranged (X key, requires bow), magic (1/2/3 keys, requires staff), status effects, knockback, critical hits.
 - **Ranged enemies**: KITE state → maintain preferred distance → fire Projectile Area2D → collides with Player.
-- **Damage formula**: `maxi(1, attacker.attack - defender.defense)`. Minimum 1 damage.
-- **Floating damage**: `Main.spawn_floating_damage()` wired to `damage_dealt` signal, spawns above hit target.
-- **Death**: `_is_dead` flag halts movement/combat. Enemy `queue_free()` after delay. Player shows "YOU DIED" overlay.
+- **Damage formula**: `maxi(1, attacker.attack - defender.defense)`. Minimum 1 damage. Crits multiply raw damage before defense.
+- **Floating damage**: `Main.spawn_floating_damage()` wired to `damage_dealt` signal, spawns above hit target. Gold/yellow for crits.
+- **Death**: `_is_dead` flag halts movement/combat. Enemy `queue_free()` after delay. Player shows "YOU DIED" overlay (permadeath: returns to main menu).
 - **Victory**: `Main._on_enemy_defeated()` counts kills, emits `all_enemies_defeated` when all cleared, triggers VICTORY overlay.
 - **Restart**: Both overlays have buttons calling `get_tree().reload_current_scene()`.
+
+## Input Map (MVP2-Lite additions)
+| Action | Key | Purpose |
+|--------|-----|---------|
+| `move_left/right/up/down` | WASD / Arrow Keys | Player movement |
+| `interact` | E | Pick up items, interact with objects |
+| `inventory` | I | Toggle inventory panel |
+| `attack_melee` | Z | Deliberate melee attack (pending Phase E) |
+| `attack_ranged` | X | Ranged attack, requires bow (pending Phase E) |
+| `spell_1` | 1 | Cast equipped spell slot 1 (pending Phase G) |
+| `spell_2` | 2 | Cast equipped spell slot 2 (pending Phase G) |
+| `spell_3` | 3 | Cast equipped spell slot 3 (pending Phase G) |
+| `pause` | Esc | Pause menu / Settings (pending Phase H) |
+
+## Audio
+- **MusicManager autoload**: Plays and crossfades between exploration (`rpg_funky_theme_1.ogg`) and combat (`rpg_battle_music_1.ogg`) music.
+- **SFX**: Wired to EventBus events — sword strike on `damage_dealt`, coin on `item_picked_up`/`gold_collected`, hurt grunts (male/female by player sprite set) on player damage.
+- **Source files**: `.mp3` files in `assets/sounds/` converted to `.ogg` via ffmpeg (`libvorbis -q:a 4`).
+- Godot 4.5 uses audio buses "Master", "Music", "SFX" (default).
 
 ## Enemy State Machine
 - **IDLE**: No movement. Checks aggro, transitions to WANDERING after interval.
@@ -153,15 +185,21 @@ The Godot 4.5 executable is at `C:\Users\seanm\Nextcloud2\Gamedev\Godot_v4.5-sta
 ```
 res://
   scripts/           - GDScript files (.gd)
-    EventBus.gd          - Autoload: 12 global signals
+    EventBus.gd          - Autoload: 16 global signals
     GameState.gd         - Autoload: persistent flags + defeat counter
-    CharacterStats.gd    - Resource: HP, XP, level-up, combat formulas
-    ItemData.gd          - Resource: 4 item types, stat bonuses
+    MusicManager.gd      - Autoload: music crossfade + SFX playback
+    CharacterStats.gd    - Resource: HP, mana, XP, level-up, combat formulas, crit
+    ItemData.gd          - Resource: 8 item types, stat bonuses, equip slot
+    PlayerData.gd        - Resource: canonical player state container
+    ProjectileData.gd    - Resource: unified projectile params
+    StatusEffect.gd      - Resource: poison/slow/stun effects
+    SpellData.gd         - Resource: spell name, mana cost, projectile + status
+    CharacterClass.gd    - Resource: class stats, spells, sprite set
     Player.gd            - CharacterBody2D: movement, combat, inventory, is_dead
     Enemy.gd             - CharacterBody2D: 5-state FSM, projectile firing, is_dead
     Main.gd              - Node2D: floating damage spawning, win condition
     HUD.gd               - CanvasLayer: programmatic UI, overlays, inventory panel
-    FloatingDamage.gd    - Label: animated damage numbers
+    FloatingDamage.gd    - Label: animated damage numbers (gold for crits)
     Projectile.gd        - Area2D: ranged enemy projectile
     ItemPickup.gd        - Area2D: world item pickup detection
   scenes/            - Scene files (.tscn)
@@ -172,11 +210,15 @@ res://
     floating_damage.tscn - Label scene for damage numbers
     item_pickup.tscn     - Area2D with green diamond + CollisionShape2D
   resources/         - Custom Resource definitions (.tres)
-    player_stats.tres    - CharacterStats: Hero (HP=100, ATK=12, DEF=5)
+    player_stats.tres    - CharacterStats: Hero (HP=100, mana=50, ATK=12, DEF=5)
     enemy_stats.tres     - CharacterStats: Slime (HP=30, ATK=6, DEF=2)
     health_potion.tres   - ItemData: CONSUMABLE, health_restore=25
     iron_sword.tres      - ItemData: WEAPON, attack_bonus=5
     leather_armor.tres   - ItemData: ARMOR, defense_bonus=3
     strange_key.tres     - ItemData: QUEST, value=5
+    warrior_class.tres   - CharacterClass: Beastmaster (HP+12, ATK+3, DEF+2, mana+2)
+    ranger_class.tres    - CharacterClass: Fox (HP+8, ATK+2, DEF+1, mana+4, crit+0.10)
+    mage_class.tres      - CharacterClass: Sorcerer (HP+5, ATK+1, DEF+1, mana+8)
+    rogue_class.tres     - CharacterClass: Swashbuckler (HP+6, ATK+2, DEF+1, mana+3, crit+0.15)
   addons/            - Godot plugins
 ```

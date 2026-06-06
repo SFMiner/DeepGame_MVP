@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CharacterClass" load_steps=2 format=3 uid="uid://crng000001"]
+
+[ext_resource type="Script" uid="uid://cchcl000001" path="res://scripts/CharacterClass.gd" id="1_class"]
+
+[resource]
+script = ExtResource("1_class")
+class_name = "Ranger"
+description = "Deadly with a bow. Balanced stats with ranged focus."
+hp_per_level = 8
+attack_per_level = 2
+defense_per_level = 1
+mana_per_level = 4
+available_spells = Array[SpellData]([])
+sprite_set = "Fox"
+crit_chance_bonus = 0.10

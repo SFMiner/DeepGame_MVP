@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CharacterClass" load_steps=2 format=3 uid="uid://cmge000001"]
+
+[ext_resource type="Script" uid="uid://cchcl000001" path="res://scripts/CharacterClass.gd" id="1_class"]
+
+[resource]
+script = ExtResource("1_class")
+class_name = "Mage"
+description = "Master of arcane arts. Low HP, high mana, powerful spells."
+hp_per_level = 5
+attack_per_level = 1
+defense_per_level = 1
+mana_per_level = 8
+available_spells = Array[SpellData]([])
+sprite_set = "Sorcerer"
+crit_chance_bonus = 0.05
