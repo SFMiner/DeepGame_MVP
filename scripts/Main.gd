@@ -29,6 +29,7 @@ func _create_room() -> void:
 		Vector2(-hw, -hh), Vector2(hw, -hh), Vector2(hw, hh), Vector2(-hw, hh)
 	])
 	add_child(floor)
+	move_child(floor, 0)
 
 	var wall_color: Color = Color(0.3, 0.25, 0.2, 1.0)
 	var wt: int = WALL_THICKNESS
@@ -45,6 +46,7 @@ func _create_wall(pos: Vector2, w: float, h: float, color: Color) -> void:
 	])
 	wall.position = pos
 	add_child(wall)
+	move_child(wall, 0)
 
 func _setup_navigation() -> void:
 	var nav_region: NavigationRegion2D = NavigationRegion2D.new()
