@@ -29,6 +29,11 @@ var _tooltip_label: Label
 var _inventory_buttons: Array[Button] = []
 var _spell_bar_panel: Panel
 var _spell_labels: Array[Label] = []
+var _pause_panel: Panel
+var _pause_open: bool = false
+var _settings_panel: Panel
+var _settings_open: bool = false
+var _permadeath_check: CheckBox
 
 func _ready() -> void:
 	_create_ui()
@@ -243,6 +248,99 @@ func _create_tooltip() -> void:
 	_tooltip_label.add_theme_font_size_override("font_size", 11)
 	_tooltip_label.visible = false
 	add_child(_tooltip_label)
+	_create_pause_panel()
+
+func _create_pause_panel() -> void:
+	var overlay_style: StyleBoxFlat = StyleBoxFlat.new()
+	overlay_style.bg_color = Color(0, 0, 0, 0.85)
+
+	_pause_panel = Panel.new()
+	_pause_panel.size = Vector2(300, 220)
+	_pause_panel.position = Vector2(250, 190)
+	_pause_panel.add_theme_stylebox_override("panel", overlay_style)
+	_pause_panel.visible = false
+	add_child(_pause_panel)
+
+	var title: Label = Label.new()
+	title.text = "PAUSED"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(0, 15)
+	title.size = Vector2(300, 30)
+	title.add_theme_color_override("font_color", Color.YELLOW)
+	title.add_theme_font_size_override("font_size", 22)
+	_pause_panel.add_child(title)
+
+	var resume_btn: Button = Button.new()
+	resume_btn.text = "Resume"
+	resume_btn.position = Vector2(100, 60)
+	resume_btn.size = Vector2(100, 35)
+	resume_btn.pressed.connect(_on_resume_pressed)
+	_pause_panel.add_child(resume_btn)
+
+	var settings_btn: Button = Button.new()
+	settings_btn.text = "Settings"
+	settings_btn.position = Vector2(100, 105)
+	settings_btn.size = Vector2(100, 35)
+	settings_btn.pressed.connect(_on_settings_pressed)
+	_pause_panel.add_child(settings_btn)
+
+	var quit_btn: Button = Button.new()
+	quit_btn.text = "Quit to Menu"
+	quit_btn.position = Vector2(100, 150)
+	quit_btn.size = Vector2(100, 35)
+	quit_btn.pressed.connect(_on_quit_to_menu)
+	_pause_panel.add_child(quit_btn)
+
+	_settings_panel = Panel.new()
+	_settings_panel.size = Vector2(300, 160)
+	_settings_panel.position = Vector2(250, 220)
+	_settings_panel.add_theme_stylebox_override("panel", overlay_style)
+	_settings_panel.visible = false
+	add_child(_settings_panel)
+
+	var set_title: Label = Label.new()
+	set_title.text = "Settings"
+	set_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	set_title.position = Vector2(0, 10)
+	set_title.size = Vector2(300, 24)
+	set_title.add_theme_color_override("font_color", Color.YELLOW)
+	set_title.add_theme_font_size_override("font_size", 18)
+	_settings_panel.add_child(set_title)
+
+	_permadeath_check = CheckBox.new()
+	_permadeath_check.text = "Permadeath"
+	_permadeath_check.position = Vector2(80, 50)
+	_permadeath_check.size = Vector2(140, 24)
+	_permadeath_check.button_pressed = GameState.permadeath_enabled
+	_permadeath_check.toggled.connect(_on_permadeath_toggled)
+	_settings_panel.add_child(_permadeath_check)
+
+	var back_btn: Button = Button.new()
+	back_btn.text = "Back"
+	back_btn.position = Vector2(100, 100)
+	back_btn.size = Vector2(100, 35)
+	back_btn.pressed.connect(_on_settings_back)
+	_settings_panel.add_child(back_btn)
+
+func _on_resume_pressed() -> void:
+	_pause_open = false
+	_pause_panel.visible = false
+	_settings_panel.visible = false
+	get_tree().paused = false
+
+func _on_settings_pressed() -> void:
+	_settings_panel.visible = true
+
+func _on_settings_back() -> void:
+	_settings_panel.visible = false
+
+func _on_quit_to_menu() -> void:
+	get_tree().paused = false
+	GameState.reset_all()
+	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+
+func _on_permadeath_toggled(checked: bool) -> void:
+	GameState.permadeath_enabled = checked
 
 func _on_player_hp_changed(current_hp: int, max_hp: int) -> void:
 	_hp_bar.max_value = max_hp
@@ -264,7 +362,18 @@ func _on_player_leveled_up(new_level: int) -> void:
 
 func _on_player_died() -> void:
 	_add_log_entry("[color=red]YOU DIED[/color]")
-	_game_over_panel.visible = true
+	if GameState.permadeath_enabled:
+		_game_over_restart_button.text = "Main Menu"
+		_game_over_restart_button.pressed.disconnect(_on_restart_pressed)
+		_game_over_restart_button.pressed.connect(_on_permadeath_return)
+		_game_over_panel.visible = true
+	else:
+		_game_over_panel.visible = true
+
+func _on_permadeath_return() -> void:
+	GameState.reset_all()
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
 func _on_damage_dealt(attacker_name: String, defender_name: String, damage: int, _world_position: Vector2, is_crit: bool = false) -> void:
 	var crit_str: String = " [CRIT]" if is_crit else ""
@@ -307,6 +416,23 @@ func _on_restart_pressed() -> void:
 	get_tree().reload_current_scene()
 
 func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("pause"):
+		if _inventory_open:
+			_inventory_open = false
+			_inventory_panel.visible = false
+			_equip_panel.visible = false
+			_tooltip_label.visible = false
+			_spell_bar_panel.visible = false
+			for btn: Button in _inventory_buttons:
+				btn.visible = false
+			for label: Label in _spell_labels:
+				label.visible = false
+		_pause_open = not _pause_open
+		_pause_panel.visible = _pause_open
+		_settings_panel.visible = false
+		get_tree().paused = _pause_open
+		return
+
 	if event.is_action_pressed("inventory"):
 		_inventory_open = not _inventory_open
 		_inventory_panel.visible = _inventory_open

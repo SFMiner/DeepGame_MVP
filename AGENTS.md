@@ -1,7 +1,7 @@
 # AGENTS.md - Basic RPG Project
 
 ## Project Overview
-A foundational 2D Computer RPG (CRPG) prototype built in Godot 4.5 with GDScript 2.0. Features modular architecture with signal-driven event bus, custom Resource data classes, bump-combat mechanics, ranged projectile enemies, inventory system with manual item usage, floating damage numbers, game-over/victory flow, and minimalist UI. Currently in **MVP2-Lite implementation** (Phase A+C complete).
+A foundational 2D Computer RPG (CRPG) prototype built in Godot 4.5 with GDScript 2.0. Features modular architecture with signal-driven event bus, custom Resource data classes, deliberate combat with windup/strike/recovery, ranged projectile enemies, magic spells, inventory/equipment system with grid UI, floating damage numbers, game-over/victory flow, and minimalist UI. Currently at **MVP2-Lite complete** (Phases A-H implemented).
 
 **MVP2-Lite goals**: Deliberate melee/ranged/magic combat, equipment slots, class system, splash/menu flow, tilemap-based dungeon room, audio (music+SFX), permadeath toggle. See `mvp2_implementation_plan.md` for the full phased plan.
 
@@ -59,9 +59,9 @@ A foundational 2D Computer RPG (CRPG) prototype built in Godot 4.5 with GDScript
 - **World items** (main.tscn): Health Potion (0,-40), Iron Sword (60,-40), Leather Armor (-60,-40), Strange Key (120,-40).
 
 ## Combat Mechanics
-- **Bump-combat (MVP1, to be replaced)**: Player collides with MELEE enemy → `_attack_enemy()` fires. Both have attack cooldowns.
-- **MVP2-Lite (Phase E pending)**: Deliberate melee (Z key with windup/strike/recovery), ranged (X key, requires bow), magic (1/2/3 keys, requires staff), status effects, knockback, critical hits.
-- **Ranged enemies**: KITE state → maintain preferred distance → fire Projectile Area2D → collides with Player.
+- **MVP2-Lite deliberate combat**: Player uses Z for melee (windup 0.2s → strike 0.15s with damage arc + block incoming → recovery 0.3s), X for ranged, 1/2/3 for spells.
+- **Melee cancel**: If hit during windup phase, attack cancels and player takes damage normally. Strike frame blocks all incoming damage.
+- **Ranged enemies**: KITE state → maintain preferred distance → fire Projectile using ProjectileData.
 - **Damage formula**: `maxi(1, attacker.attack - defender.defense)`. Minimum 1 damage. Crits multiply raw damage before defense.
 - **Floating damage**: `Main.spawn_floating_damage()` wired to `damage_dealt` signal, spawns above hit target. Gold/yellow for crits.
 - **Death**: `_is_dead` flag halts movement/combat. Enemy `queue_free()` after delay. Player shows "YOU DIED" overlay (permadeath: returns to main menu).
