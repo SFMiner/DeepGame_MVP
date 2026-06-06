@@ -421,6 +421,9 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.echo:
 		return
 	if event.is_action_pressed("pause"):
+		if _settings_panel.visible:
+			_settings_panel.visible = false
+			return
 		if _inventory_open:
 			_inventory_open = false
 			_inventory_panel.visible = false
