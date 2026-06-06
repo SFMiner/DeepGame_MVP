@@ -184,37 +184,39 @@ func _create_equip_panel() -> void:
 	_equip_panel = Panel.new()
 	_equip_panel.position = Vector2(535, 10)
 	_equip_panel.size = Vector2(110, 250)
-	_equip_panel.modulate = Color(0.1, 0.1, 0.1, 0.8)
+	var eq_style: StyleBoxFlat = StyleBoxFlat.new()
+	eq_style.bg_color = Color(0.1, 0.1, 0.1, 0.8)
+	_equip_panel.add_theme_stylebox_override("panel", eq_style)
 	add_child(_equip_panel)
 
 	var title: Label = Label.new()
 	title.text = "Equipment"
-	title.position = Vector2(540, 12)
+	title.position = Vector2(5, 2)
 	title.add_theme_color_override("font_color", Color.YELLOW)
 	title.add_theme_font_size_override("font_size", 12)
-	add_child(title)
+	_equip_panel.add_child(title)
 
 	var slots: Array[Dictionary] = [
-		{"slot": "weapon", "label": "Weapon", "y": 35},
-		{"slot": "armor", "label": "Armor", "y": 115},
-		{"slot": "accessory", "label": "Acc.", "y": 195},
+		{"slot": "weapon", "label": "Weapon", "y": 25},
+		{"slot": "armor", "label": "Armor", "y": 105},
+		{"slot": "accessory", "label": "Acc.", "y": 185},
 	]
 	for slot_info: Dictionary in slots:
 		var slot_label: Label = Label.new()
 		slot_label.text = slot_info["label"]
-		slot_label.position = Vector2(540, slot_info["y"])
+		slot_label.position = Vector2(5, slot_info["y"])
 		slot_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7, 1.0))
 		slot_label.add_theme_font_size_override("font_size", 10)
-		add_child(slot_label)
+		_equip_panel.add_child(slot_label)
 
 		var btn: Button = Button.new()
 		btn.text = "(empty)"
-		btn.position = Vector2(540, slot_info["y"] + 14)
+		btn.position = Vector2(5, slot_info["y"] + 14)
 		btn.size = Vector2(100, 44)
 		btn.pressed.connect(_on_equip_slot_clicked.bind(slot_info["slot"]))
 		btn.mouse_entered.connect(_on_equip_slot_hover.bind(slot_info["slot"]))
 		btn.mouse_exited.connect(_on_tooltip_hide)
-		add_child(btn)
+		_equip_panel.add_child(btn)
 		_equip_slot_buttons[slot_info["slot"]] = btn
 
 func _create_inventory_grid() -> void:
