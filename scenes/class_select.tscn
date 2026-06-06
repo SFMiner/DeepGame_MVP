@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bclsl00001"]
+
+[ext_resource type="Script" uid="uid://cclsl000001" path="res://scripts/ClassSelect.gd" id="1_class_sel"]
+
+[node name="ClassSelect" type="CanvasLayer"]
+script = ExtResource("1_class_sel")

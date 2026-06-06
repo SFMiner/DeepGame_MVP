@@ -3,6 +3,7 @@ extends Resource
 
 @export var player_name: String = "Hero"
 @export var character_class_name: String = ""
+@export var sprite_set: String = "Beastmaster"
 @export var level: int = 1
 @export var xp: int = 0
 @export var xp_to_next: int = 50
@@ -21,6 +22,7 @@ func serialize() -> Dictionary:
 	var data: Dictionary = {
 		"player_name": player_name,
 		"character_class_name": character_class_name,
+		"sprite_set": sprite_set,
 		"level": level,
 		"xp": xp,
 		"xp_to_next": xp_to_next,
@@ -54,6 +56,7 @@ static func deserialize(data: Dictionary) -> PlayerData:
 	var pd: PlayerData = PlayerData.new()
 	pd.player_name = data.get("player_name", "Hero")
 	pd.character_class_name = data.get("character_class_name", "")
+	pd.sprite_set = data.get("sprite_set", "Beastmaster")
 	pd.level = data.get("level", 1)
 	pd.xp = data.get("xp", 0)
 	pd.xp_to_next = data.get("xp_to_next", 50)

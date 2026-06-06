@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bsplsh00001"]
+
+[ext_resource type="Script" uid="uid://csplsh00001" path="res://scripts/SplashScreen.gd" id="1_splash"]
+
+[node name="SplashScreen" type="CanvasLayer"]
+script = ExtResource("1_splash")
