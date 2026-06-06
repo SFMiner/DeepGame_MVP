@@ -50,6 +50,10 @@ func _ready() -> void:
 	EventBus.game_message.connect(_on_game_message)
 	EventBus.all_enemies_defeated.connect(_on_all_enemies_defeated)
 
+func _process(_delta: float) -> void:
+	if Input.is_action_just_pressed("pause"):
+		_handle_pause()
+
 func _create_ui() -> void:
 	var top_panel: Panel = Panel.new()
 	top_panel.position = Vector2(10, 10)
@@ -423,10 +427,6 @@ func _on_restart_pressed() -> void:
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.echo:
 		return
-	if event.is_action_pressed("pause"):
-		_handle_pause()
-		return
-
 	if event.is_action_pressed("inventory"):
 		_inventory_open = not _inventory_open
 		_inventory_panel.visible = _inventory_open
@@ -444,10 +444,6 @@ func _input(event: InputEvent) -> void:
 
 	if _inventory_open and event is InputEventKey and event.pressed and event.keycode == KEY_X:
 		_try_drop_selected()
-
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("pause"):
-		_handle_pause()
 
 func _handle_pause() -> void:
 	if _settings_panel.visible:
