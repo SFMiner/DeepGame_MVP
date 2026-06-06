@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StatusEffect" load_steps=2 format=3 uid="uid://sbrn0000001"]
+
+[ext_resource type="Script" uid="uid://cstfx000001" path="res://scripts/StatusEffect.gd" id="1_status"]
+
+[resource]
+script = ExtResource("1_status")
+effect_type = 0
+duration = 3.0
+damage_per_tick = 4
+speed_multiplier = 1.0
+tick_interval = 1.0

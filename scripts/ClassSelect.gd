@@ -164,9 +164,27 @@ func _on_confirm() -> void:
 	pd.base_defense = 5
 	pd.base_mana = 50
 	pd.sprite_set = cls.sprite_set
+	var spells: Array[SpellData] = _get_default_spells(cls.class_name)
+	for spell: SpellData in spells:
+		pd.equipped_spells.append(spell)
 	GameState.selected_class = cls
 	GameState.player_data = pd
 	get_tree().change_scene_to_file(GAME_SCENE)
+
+func _get_default_spells(class_name: String) -> Array[SpellData]:
+	var result: Array[SpellData] = []
+	match class_name:
+		"Warrior":
+			result.append(load("res://resources/fireball_spell.tres") as SpellData)
+		"Ranger":
+			result.append(load("res://resources/ice_shard_spell.tres") as SpellData)
+		"Mage":
+			result.append(load("res://resources/fireball_spell.tres") as SpellData)
+			result.append(load("res://resources/ice_shard_spell.tres") as SpellData)
+			result.append(load("res://resources/lightning_bolt_spell.tres") as SpellData)
+		"Rogue":
+			result.append(load("res://resources/ice_shard_spell.tres") as SpellData)
+	return result
 
 func _on_back() -> void:
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE)

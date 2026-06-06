@@ -16,6 +16,7 @@ enum AtkState { IDLE, WINDUP, STRIKE, RECOVERY }
 var _inventory: Array[ItemData] = []
 var _equipment: Dictionary = {}
 var _equipped_spells: Array[SpellData] = []
+var _spell_cooldowns: Array[float] = []
 var _attack_cooldown: float = 0.0
 var _is_dead: bool = false
 var _nearby_items: Array[ItemPickup] = []
@@ -45,6 +46,7 @@ func _ready() -> void:
 		EventBus.player_hp_changed.emit(stats.hp, stats.max_hp)
 		EventBus.player_xp_changed.emit(stats.xp, stats.xp_to_next)
 		EventBus.player_mana_changed.emit(stats.mana, stats.max_mana)
+	_equip_spells_from_data()
 
 func _setup_melee_hitbox() -> void:
 	_melee_hitbox = Area2D.new()
@@ -67,6 +69,7 @@ func _physics_process(delta: float) -> void:
 	_process_statuses(delta)
 	_process_knockback(delta)
 	_process_attack_state(delta)
+	_process_spell_cooldowns(delta)
 
 	if _atk_state == AtkState.IDLE or _atk_state == AtkState.STRIKE:
 		var direction: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -105,6 +108,12 @@ func _check_attack_input() -> void:
 		_start_melee_attack()
 	elif Input.is_action_just_pressed("attack_ranged"):
 		_start_ranged_attack()
+	elif Input.is_action_just_pressed("spell_1"):
+		cast_spell(0)
+	elif Input.is_action_just_pressed("spell_2"):
+		cast_spell(1)
+	elif Input.is_action_just_pressed("spell_3"):
+		cast_spell(2)
 
 func _start_melee_attack() -> void:
 	_atk_state = AtkState.WINDUP
@@ -130,6 +139,57 @@ func _do_recovery() -> void:
 
 func _start_ranged_attack() -> void:
 	pass
+
+func cast_spell(index: int) -> void:
+	if index < 0 or index >= _equipped_spells.size():
+		return
+	var spell: SpellData = _equipped_spells[index]
+	if not spell:
+		return
+	if index < _spell_cooldowns.size() and _spell_cooldowns[index] > 0.0:
+		EventBus.game_message.emit("Spell on cooldown")
+		return
+	var has_staff: bool = false
+	var weapon: ItemData = _equipment.get("weapon")
+	if weapon and weapon.item_type == ItemData.ItemType.STAFF:
+		has_staff = true
+	if not has_staff:
+		EventBus.game_message.emit("Staff required to cast spells")
+		return
+	if not stats or not stats.use_mana(spell.mana_cost):
+		EventBus.game_message.emit("Not enough mana")
+		return
+	EventBus.game_message.emit("Cast " + spell.spell_name + "!")
+	var proj: Projectile = Projectile.new()
+	proj.set_projectile_data(spell.projectile_data)
+	proj.attacker_name = stats.character_name
+	var dir: Vector2 = Vector2.DOWN
+	match _last_facing:
+		0: dir = Vector2.DOWN
+		1: dir = Vector2.LEFT
+		2: dir = Vector2.RIGHT
+		3: dir = Vector2.UP
+	proj.direction = dir
+	proj._projectile_data = spell.projectile_data
+	get_parent().add_child(proj)
+	proj.global_position = global_position + dir * 20.0
+	if spell.status_effect:
+		proj._status_effect_on_hit = spell.status_effect
+	while _spell_cooldowns.size() <= index:
+		_spell_cooldowns.append(0.0)
+	_spell_cooldowns[index] = spell.cooldown
+	_equip_spells_from_data()
+
+func _process_spell_cooldowns(delta: float) -> void:
+	for i: int in range(_spell_cooldowns.size()):
+		_spell_cooldowns[i] = maxf(0.0, _spell_cooldowns[i] - delta)
+
+func _equip_spells_from_data() -> void:
+	if GameState.player_data:
+		for spell: SpellData in GameState.player_data.equipped_spells:
+			if not _equipped_spells.has(spell):
+				_equipped_spells.append(spell)
+		GameState.player_data.equipped_spells = _equipped_spells.duplicate()
 
 func _deal_damage_to_enemy(enemy: Enemy) -> void:
 	if not stats or not enemy.stats:

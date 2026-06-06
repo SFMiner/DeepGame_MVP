@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ProjectileData" load_steps=2 format=3 uid="uid://pfbp0000001"]
+
+[ext_resource type="Script" uid="uid://cpjdt000001" path="res://scripts/ProjectileData.gd" id="1_proj"]
+
+[resource]
+script = ExtResource("1_proj")
+damage = 20
+speed = 300.0
+range = 250.0
+color = Color(1, 0.3, 0.1, 1)
+size = 6.0
+pierce = false
+element = "fire"

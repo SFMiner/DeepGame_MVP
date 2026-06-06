@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SpellData" load_steps=4 format=3 uid="uid://sfire000001"]
+
+[ext_resource type="Script" uid="uid://cspld000001" path="res://scripts/SpellData.gd" id="1_spell"]
+[ext_resource type="Resource" uid="uid://pfbp0000001" path="res://resources/fireball_projectile.tres" id="2_proj"]
+[ext_resource type="Resource" uid="uid://sbrn0000001" path="res://resources/burn_status.tres" id="3_status"]
+
+[resource]
+script = ExtResource("1_spell")
+spell_name = "Fireball"
+mana_cost = 8
+cooldown = 1.5
+projectile_data = ExtResource("2_proj")
+status_effect = ExtResource("3_status")

@@ -9,6 +9,7 @@ var lifetime: float = 3.0
 var _projectile_data: ProjectileData
 var _distance_traveled: float = 0.0
 var _pierce_hit: bool = false
+var _status_effect_on_hit: StatusEffect
 
 func _ready() -> void:
 	collision_layer = 0
@@ -62,6 +63,8 @@ func _on_body_entered(body: Node2D) -> void:
 		if body.stats:
 			var actual: int = body.stats.take_damage(damage)
 			EventBus.damage_dealt.emit(attacker_name, body.stats.character_name, actual, body.global_position, false)
+		if _status_effect_on_hit:
+			(body as Player).apply_status_effect(_status_effect_on_hit)
 		if _projectile_data and _projectile_data.pierce:
 			if not _pierce_hit:
 				_pierce_hit = true
