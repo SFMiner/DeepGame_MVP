@@ -261,6 +261,7 @@ func _create_pause_panel() -> void:
 	_pause_panel.position = Vector2(250, 190)
 	_pause_panel.add_theme_stylebox_override("panel", overlay_style)
 	_pause_panel.visible = false
+	_pause_panel.process_mode = PROCESS_MODE_ALWAYS
 	add_child(_pause_panel)
 
 	var title: Label = Label.new()
@@ -298,6 +299,7 @@ func _create_pause_panel() -> void:
 	_settings_panel.position = Vector2(250, 220)
 	_settings_panel.add_theme_stylebox_override("panel", overlay_style)
 	_settings_panel.visible = false
+	_settings_panel.process_mode = PROCESS_MODE_ALWAYS
 	add_child(_settings_panel)
 
 	var set_title: Label = Label.new()
