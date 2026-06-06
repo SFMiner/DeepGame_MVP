@@ -9,7 +9,7 @@ enum AtkState { IDLE, WINDUP, STRIKE, RECOVERY }
 @export var windup_duration: float = 0.2
 @export var strike_duration: float = 0.15
 @export var recovery_duration: float = 0.3
-@export var melee_range: float = 40.0
+@export var melee_range: float = 80.0
 @export var knockback_strength: float = 200.0
 @export var knockback_decay: float = 5.0
 
@@ -54,7 +54,7 @@ func _setup_melee_hitbox() -> void:
 	_melee_hitbox.collision_mask = 1
 	var shape: CollisionShape2D = CollisionShape2D.new()
 	var rect: RectangleShape2D = RectangleShape2D.new()
-	rect.size = Vector2(melee_range, 30)
+	rect.size = Vector2(melee_range, 40)
 	shape.shape = rect
 	shape.position = Vector2(melee_range / 2.0, 0)
 	_melee_hitbox.add_child(shape)
