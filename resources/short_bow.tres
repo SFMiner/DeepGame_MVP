@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://ibow0000001"]
+
+[ext_resource type="Script" uid="uid://chdbr8gp6ub1r" path="res://scripts/ItemData.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_name = "Short Bow"
+item_description = "Enables ranged attacks. +4 ATK."
+item_type = 4
+health_restore = 0
+attack_bonus = 4
+defense_bonus = 0
+value = 25
+equip_slot = "weapon"
+block_chance = 0.0
+mana_bonus = 0
+max_hp_bonus = 0

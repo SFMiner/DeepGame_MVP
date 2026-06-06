@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://ishd0000001"]
+
+[ext_resource type="Script" uid="uid://chdbr8gp6ub1r" path="res://scripts/ItemData.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_name = "Wooden Shield"
+item_description = "Blocks attacks. +3 DEF, 15% block."
+item_type = 6
+health_restore = 0
+attack_bonus = 0
+defense_bonus = 3
+value = 20
+equip_slot = "armor"
+block_chance = 0.15
+mana_bonus = 0
+max_hp_bonus = 0

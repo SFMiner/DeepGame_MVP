@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://irng0000001"]
+
+[ext_resource type="Script" uid="uid://chdbr8gp6ub1r" path="res://scripts/ItemData.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_name = "Ring of Vitality"
+item_description = "A magical ring. +20 Max HP."
+item_type = 7
+health_restore = 0
+attack_bonus = 0
+defense_bonus = 0
+value = 35
+equip_slot = "accessory"
+block_chance = 0.0
+mana_bonus = 0
+max_hp_bonus = 20

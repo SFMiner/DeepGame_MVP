@@ -14,6 +14,8 @@ enum AtkState { IDLE, WINDUP, STRIKE, RECOVERY }
 @export var knockback_decay: float = 5.0
 
 var _inventory: Array[ItemData] = []
+var _equipment: Dictionary = {}
+var _equipped_spells: Array[SpellData] = []
 var _attack_cooldown: float = 0.0
 var _is_dead: bool = false
 var _nearby_items: Array[ItemPickup] = []
@@ -207,20 +209,93 @@ func use_item(index: int) -> bool:
 				EventBus.game_message.emit("Used " + item.item_name + ": restored " + str(item.health_restore) + " HP")
 			_inventory.remove_at(index)
 			return true
-		ItemData.ItemType.WEAPON:
-			if stats:
-				stats.attack += item.attack_bonus
-			EventBus.game_message.emit("Equipped " + item.item_name + ": +" + str(item.attack_bonus) + " ATK")
-			return true
-		ItemData.ItemType.ARMOR:
-			if stats:
-				stats.defense += item.defense_bonus
-			EventBus.game_message.emit("Equipped " + item.item_name + ": +" + str(item.defense_bonus) + " DEF")
-			return true
+		ItemData.ItemType.WEAPON, ItemData.ItemType.BOW, ItemData.ItemType.STAFF:
+			return equip_item(index)
+		ItemData.ItemType.ARMOR, ItemData.ItemType.SHIELD:
+			return equip_item(index)
+		ItemData.ItemType.ACCESSORY:
+			return equip_item(index)
 		ItemData.ItemType.QUEST:
 			EventBus.game_message.emit(item.item_name + " has no immediate use")
 			return false
 	return false
+
+func equip_item(index: int) -> bool:
+	if index < 0 or index >= _inventory.size():
+		return false
+	var item: ItemData = _inventory[index]
+	var slot: String = item.equip_slot
+	if slot.is_empty():
+		return false
+	var old_item: ItemData = _equipment.get(slot)
+	if old_item:
+		_inventory.append(old_item)
+	_equipment[slot] = item
+	_inventory.remove_at(index)
+	_recalc_stats()
+	if old_item:
+		EventBus.game_message.emit("Swapped " + item.item_name + " for " + old_item.item_name)
+	else:
+		EventBus.game_message.emit("Equipped " + item.item_name)
+	return true
+
+func unequip_item(slot: String) -> void:
+	var item: ItemData = _equipment.get(slot)
+	if not item:
+		return
+	_inventory.append(item)
+	_equipment.erase(slot)
+	_recalc_stats()
+	EventBus.game_message.emit("Unequipped " + item.item_name)
+
+func drop_item(source: Variant) -> void:
+	var item: ItemData = null
+	if source is int:
+		var index: int = source as int
+		if index < 0 or index >= _inventory.size():
+			return
+		item = _inventory[index]
+		_inventory.remove_at(index)
+	elif source is String:
+		var slot: String = source as String
+		item = _equipment.get(slot)
+		if not item:
+			return
+		_equipment.erase(slot)
+		_recalc_stats()
+	else:
+		return
+	var pickup: PackedScene = load("res://scenes/item_pickup.tscn") as PackedScene
+	var ip: ItemPickup = pickup.instantiate()
+	ip.item_data = item
+	get_parent().add_child(ip)
+	ip.global_position = global_position + Vector2(randf_range(-20, 20), randf_range(-20, 20))
+	EventBus.game_message.emit("Dropped " + item.item_name)
+
+func _recalc_stats() -> void:
+	if not stats:
+		return
+	if GameState.player_data:
+		var pd: PlayerData = GameState.player_data
+		stats.max_hp = pd.base_max_hp
+		stats.attack = pd.base_attack
+		stats.defense = pd.base_defense
+		stats.max_mana = pd.base_mana
+	for slot: String in _equipment:
+		var item: ItemData = _equipment[slot]
+		if not item:
+			continue
+		stats.attack += item.attack_bonus
+		stats.defense += item.defense_bonus
+		stats.max_hp += item.max_hp_bonus
+		stats.max_mana += item.mana_bonus
+	stats.hp = mini(stats.hp, stats.max_hp)
+	stats.mana = mini(stats.mana, stats.max_mana)
+	EventBus.player_hp_changed.emit(stats.hp, stats.max_hp)
+	EventBus.player_mana_changed.emit(stats.mana, stats.max_mana)
+
+func get_equipment() -> Dictionary:
+	return _equipment
 
 func get_inventory() -> Array[ItemData]:
 	return _inventory

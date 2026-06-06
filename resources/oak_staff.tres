@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3 uid="uid://istf0000001"]
+
+[ext_resource type="Script" uid="uid://chdbr8gp6ub1r" path="res://scripts/ItemData.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_name = "Oak Staff"
+item_description = "Enables magic. +2 ATK, +10 Mana."
+item_type = 5
+health_restore = 0
+attack_bonus = 2
+defense_bonus = 0
+value = 30
+equip_slot = "weapon"
+block_chance = 0.0
+mana_bonus = 10
+max_hp_bonus = 0
