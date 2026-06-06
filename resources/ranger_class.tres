@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_class")
-class_name = "Ranger"
+char_class_name = "Ranger"
 description = "Deadly with a bow. Balanced stats with ranged focus."
 hp_per_level = 8
 attack_per_level = 2

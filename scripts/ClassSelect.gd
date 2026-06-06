@@ -136,7 +136,7 @@ func _update_display() -> void:
 		return
 	var cls: CharacterClass = _classes[_current_index]
 	_setup_preview_sprite(cls.sprite_set)
-	_class_label.text = cls.class_name
+	_class_label.text = cls.char_class_name
 	_desc_label.text = cls.description
 	_stats_label.text = "HP/lvl: " + str(cls.hp_per_level) + "  ATK/lvl: " + str(cls.attack_per_level) + "  DEF/lvl: " + str(cls.defense_per_level) + "  Mana/lvl: " + str(cls.mana_per_level)
 
@@ -157,14 +157,14 @@ func _on_confirm() -> void:
 		return
 	var cls: CharacterClass = _classes[_current_index]
 	var pd: PlayerData = PlayerData.new()
-	pd.player_name = cls.class_name
-	pd.character_class_name = cls.class_name
+	pd.player_name = cls.char_class_name
+	pd.character_class_name = cls.char_class_name
 	pd.base_max_hp = 100
 	pd.base_attack = 10
 	pd.base_defense = 5
 	pd.base_mana = 50
 	pd.sprite_set = cls.sprite_set
-	var spells: Array[SpellData] = _get_default_spells(cls.class_name)
+	var spells: Array[SpellData] = _get_default_spells(cls.char_class_name)
 	for spell: SpellData in spells:
 		pd.equipped_spells.append(spell)
 	GameState.selected_class = cls

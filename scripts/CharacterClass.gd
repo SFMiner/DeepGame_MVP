@@ -1,7 +1,7 @@
 class_name CharacterClass
 extends Resource
 
-@export var class_name: String = ""
+@export var char_class_name: String = ""
 @export var description: String = ""
 @export var hp_per_level: int = 10
 @export var attack_per_level: int = 2

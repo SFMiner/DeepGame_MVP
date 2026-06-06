@@ -99,4 +99,3 @@ func spawn_floating_damage(world_position: Vector2, damage: int, is_crit: bool =
 		fd.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0, 1.0))
 		fd.add_theme_font_size_override("font_size", 22)
 	add_child(fd)
-

@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_class")
-class_name = "Warrior"
+char_class_name = "Warrior"
 description = "Strong melee fighter. High HP and attack, low mana."
 hp_per_level = 12
 attack_per_level = 3

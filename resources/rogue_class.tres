@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_class")
-class_name = "Rogue"
+char_class_name = "Rogue"
 description = "Quick and cunning. High crit chance, moderate stats."
 hp_per_level = 6
 attack_per_level = 2

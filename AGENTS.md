@@ -185,40 +185,40 @@ The Godot 4.5 executable is at `C:\Users\seanm\Nextcloud2\Gamedev\Godot_v4.5-sta
 ```
 res://
   scripts/           - GDScript files (.gd)
-    EventBus.gd          - Autoload: 16 global signals
-    GameState.gd         - Autoload: persistent flags + defeat counter
-    MusicManager.gd      - Autoload: music crossfade + SFX playback
-    CharacterStats.gd    - Resource: HP, mana, XP, level-up, combat formulas, crit
-    ItemData.gd          - Resource: 8 item types, stat bonuses, equip slot
-    PlayerData.gd        - Resource: canonical player state container
-    ProjectileData.gd    - Resource: unified projectile params
-    StatusEffect.gd      - Resource: poison/slow/stun effects
-    SpellData.gd         - Resource: spell name, mana cost, projectile + status
-    CharacterClass.gd    - Resource: class stats, spells, sprite set
-    Player.gd            - CharacterBody2D: movement, combat, inventory, is_dead
-    Enemy.gd             - CharacterBody2D: 5-state FSM, projectile firing, is_dead
-    Main.gd              - Node2D: floating damage spawning, win condition
-    HUD.gd               - CanvasLayer: programmatic UI, overlays, inventory panel
-    FloatingDamage.gd    - Label: animated damage numbers (gold for crits)
-    Projectile.gd        - Area2D: ranged enemy projectile
-    ItemPickup.gd        - Area2D: world item pickup detection
+	EventBus.gd          - Autoload: 16 global signals
+	GameState.gd         - Autoload: persistent flags + defeat counter
+	MusicManager.gd      - Autoload: music crossfade + SFX playback
+	CharacterStats.gd    - Resource: HP, mana, XP, level-up, combat formulas, crit
+	ItemData.gd          - Resource: 8 item types, stat bonuses, equip slot
+	PlayerData.gd        - Resource: canonical player state container
+	ProjectileData.gd    - Resource: unified projectile params
+	StatusEffect.gd      - Resource: poison/slow/stun effects
+	SpellData.gd         - Resource: spell name, mana cost, projectile + status
+	CharacterClass.gd    - Resource: class stats, spells, sprite set
+	Player.gd            - CharacterBody2D: movement, combat, inventory, is_dead
+	Enemy.gd             - CharacterBody2D: 5-state FSM, projectile firing, is_dead
+	Main.gd              - Node2D: floating damage spawning, win condition
+	HUD.gd               - CanvasLayer: programmatic UI, overlays, inventory panel
+	FloatingDamage.gd    - Label: animated damage numbers (gold for crits)
+	Projectile.gd        - Area2D: ranged enemy projectile
+	ItemPickup.gd        - Area2D: world item pickup detection
   scenes/            - Scene files (.tscn)
-    main.tscn            - Entry point: player, 3 enemies, 4 item pickups, HUD
-    player.tscn          - AnimatedSprite2D + Camera2D + CollisionShape2D
-    enemy.tscn           - AnimatedSprite2D + CollisionShape2D
-    hud.tscn             - Bare CanvasLayer (UI created programmatically)
-    floating_damage.tscn - Label scene for damage numbers
-    item_pickup.tscn     - Area2D with green diamond + CollisionShape2D
+	main.tscn            - Entry point: player, 3 enemies, 4 item pickups, HUD
+	player.tscn          - AnimatedSprite2D + Camera2D + CollisionShape2D
+	enemy.tscn           - AnimatedSprite2D + CollisionShape2D
+	hud.tscn             - Bare CanvasLayer (UI created programmatically)
+	floating_damage.tscn - Label scene for damage numbers
+	item_pickup.tscn     - Area2D with green diamond + CollisionShape2D
   resources/         - Custom Resource definitions (.tres)
-    player_stats.tres    - CharacterStats: Hero (HP=100, mana=50, ATK=12, DEF=5)
-    enemy_stats.tres     - CharacterStats: Slime (HP=30, ATK=6, DEF=2)
-    health_potion.tres   - ItemData: CONSUMABLE, health_restore=25
-    iron_sword.tres      - ItemData: WEAPON, attack_bonus=5
-    leather_armor.tres   - ItemData: ARMOR, defense_bonus=3
-    strange_key.tres     - ItemData: QUEST, value=5
-    warrior_class.tres   - CharacterClass: Beastmaster (HP+12, ATK+3, DEF+2, mana+2)
-    ranger_class.tres    - CharacterClass: Fox (HP+8, ATK+2, DEF+1, mana+4, crit+0.10)
-    mage_class.tres      - CharacterClass: Sorcerer (HP+5, ATK+1, DEF+1, mana+8)
-    rogue_class.tres     - CharacterClass: Swashbuckler (HP+6, ATK+2, DEF+1, mana+3, crit+0.15)
+	player_stats.tres    - CharacterStats: Hero (HP=100, mana=50, ATK=12, DEF=5)
+	enemy_stats.tres     - CharacterStats: Slime (HP=30, ATK=6, DEF=2)
+	health_potion.tres   - ItemData: CONSUMABLE, health_restore=25
+	iron_sword.tres      - ItemData: WEAPON, attack_bonus=5
+	leather_armor.tres   - ItemData: ARMOR, defense_bonus=3
+	strange_key.tres     - ItemData: QUEST, value=5
+	warrior_class.tres   - CharacterClass: Beastmaster (HP+12, ATK+3, DEF+2, mana+2)
+	ranger_class.tres    - CharacterClass: Fox (HP+8, ATK+2, DEF+1, mana+4, crit+0.10)
+	mage_class.tres      - CharacterClass: Sorcerer (HP+5, ATK+1, DEF+1, mana+8)
+	rogue_class.tres     - CharacterClass: Swashbuckler (HP+6, ATK+2, DEF+1, mana+3, crit+0.15)
   addons/            - Godot plugins
 ```

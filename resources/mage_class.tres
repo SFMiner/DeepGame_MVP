@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_class")
-class_name = "Mage"
+char_class_name = "Mage"
 description = "Master of arcane arts. Low HP, high mana, powerful spells."
 hp_per_level = 5
 attack_per_level = 1
