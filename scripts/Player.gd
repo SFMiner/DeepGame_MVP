@@ -1,9 +1,17 @@
 class_name Player
 extends CharacterBody2D
 
+enum AtkState { IDLE, WINDUP, STRIKE, RECOVERY }
+
 @export var stats: CharacterStats
 @export var move_speed: float = 150.0
 @export var attack_interval: float = 0.5
+@export var windup_duration: float = 0.2
+@export var strike_duration: float = 0.15
+@export var recovery_duration: float = 0.3
+@export var melee_range: float = 40.0
+@export var knockback_strength: float = 200.0
+@export var knockback_decay: float = 5.0
 
 var _inventory: Array[ItemData] = []
 var _attack_cooldown: float = 0.0
@@ -11,12 +19,19 @@ var _is_dead: bool = false
 var _nearby_items: Array[ItemPickup] = []
 var _last_facing: int = 0
 var _sprite_set: String = "Beastmaster"
+var _atk_state: AtkState = AtkState.IDLE
+var _atk_state_timer: float = 0.0
+var _active_statuses: Array[StatusEffect] = []
+var _status_timers: Array[float] = []
+var _knockback_velocity: Vector2 = Vector2.ZERO
+var _melee_hitbox: Area2D
 
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var _collision_shape: CollisionShape2D = $CollisionShape2D
 
 func _ready() -> void:
 	_setup_animations()
+	_setup_melee_hitbox()
 	add_to_group("player")
 	if stats:
 		stats = stats.duplicate() as CharacterStats
@@ -24,34 +39,157 @@ func _ready() -> void:
 		stats.xp_changed.connect(_on_stats_xp_changed)
 		stats.leveled_up.connect(_on_stats_leveled_up)
 		stats.died.connect(_on_stats_died)
+		stats.mana_changed.connect(_on_stats_mana_changed)
 		EventBus.player_hp_changed.emit(stats.hp, stats.max_hp)
 		EventBus.player_xp_changed.emit(stats.xp, stats.xp_to_next)
+		EventBus.player_mana_changed.emit(stats.mana, stats.max_mana)
+
+func _setup_melee_hitbox() -> void:
+	_melee_hitbox = Area2D.new()
+	_melee_hitbox.collision_layer = 0
+	_melee_hitbox.collision_mask = 2
+	var shape: CollisionShape2D = CollisionShape2D.new()
+	var rect: RectangleShape2D = RectangleShape2D.new()
+	rect.size = Vector2(melee_range, 30)
+	shape.shape = rect
+	shape.position = Vector2(melee_range / 2.0, 0)
+	_melee_hitbox.add_child(shape)
+	_melee_hitbox.monitoring = false
+	call_deferred("add_child", _melee_hitbox)
 
 func _physics_process(delta: float) -> void:
 	if _is_dead:
 		velocity = Vector2.ZERO
 		return
 
-	var direction: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	velocity = direction * move_speed
+	_process_statuses(delta)
+	_process_knockback(delta)
+	_process_attack_state(delta)
+
+	if _atk_state == AtkState.IDLE or _atk_state == AtkState.STRIKE:
+		var direction: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+		velocity = direction * get_effective_speed()
+	else:
+		velocity = Vector2.ZERO
+
+	velocity += _knockback_velocity
 	move_and_slide()
 
 	if Input.is_action_just_pressed("interact"):
 		_try_pickup_item()
 
+	_check_attack_input()
 	_update_animation(delta)
 
-	_attack_cooldown = maxf(0.0, _attack_cooldown - delta)
+func _process_attack_state(delta: float) -> void:
+	match _atk_state:
+		AtkState.WINDUP:
+			_atk_state_timer -= delta
+			if _atk_state_timer <= 0.0:
+				_do_strike()
+		AtkState.STRIKE:
+			_atk_state_timer -= delta
+			if _atk_state_timer <= 0.0:
+				_do_recovery()
+		AtkState.RECOVERY:
+			_atk_state_timer -= delta
+			if _atk_state_timer <= 0.0:
+				_atk_state = AtkState.IDLE
 
-	if _attack_cooldown <= 0.0:
-		for i: int in range(get_slide_collision_count()):
-			var collision: KinematicCollision2D = get_slide_collision(i)
-			var collider: Node = collision.get_collider() as Node
-			if collider:
-				if collider is Enemy:
-					_attack_enemy(collider as Enemy)
-					_attack_cooldown = attack_interval
-					break
+func _check_attack_input() -> void:
+	if _atk_state != AtkState.IDLE:
+		return
+	if Input.is_action_just_pressed("attack_melee"):
+		_start_melee_attack()
+	elif Input.is_action_just_pressed("attack_ranged"):
+		_start_ranged_attack()
+
+func _start_melee_attack() -> void:
+	_atk_state = AtkState.WINDUP
+	_atk_state_timer = windup_duration
+
+func _do_strike() -> void:
+	_atk_state = AtkState.STRIKE
+	_atk_state_timer = strike_duration
+	_melee_hitbox.position = Vector2(melee_range if _last_facing == 2 else -melee_range if _last_facing == 1 else 0, melee_range if _last_facing == 0 else -melee_range if _last_facing == 3 else 0)
+	_melee_hitbox.rotation = 0.0 if _last_facing < 2 else PI
+	_melee_hitbox.monitoring = true
+	var bodies: Array[Node2D] = _melee_hitbox.get_overlapping_bodies()
+	for body: Node2D in bodies:
+		if body is Enemy:
+			var enemy: Enemy = body as Enemy
+			if enemy and enemy.stats and enemy.stats.is_alive():
+				_deal_damage_to_enemy(enemy)
+
+func _do_recovery() -> void:
+	_atk_state = AtkState.RECOVERY
+	_atk_state_timer = recovery_duration
+	_melee_hitbox.monitoring = false
+
+func _start_ranged_attack() -> void:
+	pass
+
+func _deal_damage_to_enemy(enemy: Enemy) -> void:
+	if not stats or not enemy.stats:
+		return
+	var is_crit: bool = randf() < stats.crit_chance
+	var damage: int = stats.attack
+	var actual: int = enemy.stats.take_damage(damage, is_crit)
+	EventBus.damage_dealt.emit(stats.character_name, enemy.stats.character_name, actual, enemy.global_position, is_crit)
+	enemy.apply_knockback(global_position, knockback_strength)
+	if not enemy.stats.is_alive():
+		EventBus.enemy_defeated.emit(enemy.stats.character_name)
+		GameState.defeat_count += 1
+		_grant_xp_for_enemy(enemy.stats.level)
+
+func apply_knockback(from_position: Vector2, strength: float) -> void:
+	var direction: Vector2 = global_position.direction_to(from_position)
+	_knockback_velocity = direction * strength
+
+func _process_knockback(delta: float) -> void:
+	if _knockback_velocity.length() < 1.0:
+		_knockback_velocity = Vector2.ZERO
+		return
+	_knockback_velocity = _knockback_velocity.move_toward(Vector2.ZERO, knockback_decay * _knockback_velocity.length() * delta)
+
+func apply_status_effect(effect: StatusEffect) -> void:
+	_active_statuses.append(effect)
+	_status_timers.append(effect.duration)
+	EventBus.status_applied.emit(stats.character_name if stats else "Player", effect.effect_type)
+
+func _process_statuses(delta: float) -> void:
+	if _active_statuses.is_empty():
+		return
+	for i: int in range(_active_statuses.size() - 1, -1, -1):
+		var effect: StatusEffect = _active_statuses[i]
+		_status_timers[i] -= delta
+		if effect.effect_type == StatusEffect.EffectType.POISON:
+			if fmod(effect.duration - _status_timers[i], effect.tick_interval) < delta:
+				stats.take_damage(effect.damage_per_tick)
+		if _status_timers[i] <= 0.0:
+			_active_statuses.remove_at(i)
+			_status_timers.remove_at(i)
+
+func take_damage_from_enemy(damage: int, is_crit: bool = false, attacker_pos: Vector2 = Vector2.ZERO) -> void:
+	if not stats:
+		return
+	if _atk_state == AtkState.STRIKE:
+		return
+	if _atk_state == AtkState.WINDUP:
+		_atk_state = AtkState.IDLE
+		_atk_state_timer = 0.0
+		_melee_hitbox.monitoring = false
+	stats.take_damage(damage, is_crit)
+	if attacker_pos != Vector2.ZERO:
+		apply_knockback(attacker_pos, knockback_strength * 0.7)
+
+func get_effective_speed() -> float:
+	for effect: StatusEffect in _active_statuses:
+		if effect.effect_type == StatusEffect.EffectType.SLOW:
+			return move_speed * effect.speed_multiplier
+		if effect.effect_type == StatusEffect.EffectType.STUN:
+			return 0.0
+	return move_speed
 
 func add_item(item: ItemData) -> void:
 	_inventory.append(item)
@@ -94,18 +232,6 @@ func _try_pickup_item() -> void:
 	add_item(pickup.item_data)
 	pickup.queue_free()
 
-func _attack_enemy(enemy: Enemy) -> void:
-	if not stats or not enemy.stats:
-		return
-	var is_crit: bool = randf() < stats.crit_chance
-	var damage: int = stats.attack
-	var actual: int = enemy.stats.take_damage(damage, is_crit)
-	EventBus.damage_dealt.emit(stats.character_name, enemy.stats.character_name, actual, enemy.global_position, is_crit)
-	if not enemy.stats.is_alive():
-		EventBus.enemy_defeated.emit(enemy.stats.character_name)
-		GameState.defeat_count += 1
-		_grant_xp_for_enemy(enemy.stats.level)
-
 func _grant_xp_for_enemy(enemy_level: int) -> void:
 	if not stats:
 		return
@@ -119,10 +245,14 @@ func _on_stats_hp_changed(current_hp: int, _max_hp: int) -> void:
 func _on_stats_xp_changed(current_xp: int, xp_to_next: int) -> void:
 	EventBus.player_xp_changed.emit(current_xp, xp_to_next)
 
+func _on_stats_mana_changed(current_mana: int, max_mana: int) -> void:
+	EventBus.player_mana_changed.emit(current_mana, max_mana)
+
 func _on_stats_leveled_up(new_level: int) -> void:
 	EventBus.player_leveled_up.emit(new_level)
 	EventBus.game_message.emit("Level Up! Now level " + str(new_level))
 	EventBus.player_hp_changed.emit(stats.hp, stats.max_hp)
+	EventBus.player_mana_changed.emit(stats.mana, stats.max_mana)
 
 func _on_stats_died() -> void:
 	_is_dead = true
@@ -177,7 +307,12 @@ func _get_direction() -> int:
 
 func _update_animation(_delta: float) -> void:
 	var dir_idx: int = _get_direction()
-	var base: String = "walk" if velocity.length() > 10.0 else "idle"
+	var base: String = "idle"
+	match _atk_state:
+		AtkState.WINDUP, AtkState.STRIKE:
+			base = "melee"
+		_:
+			base = "walk" if velocity.length() > 10.0 else "idle"
 	var anim_name: String = base + "_" + DIR_NAMES[dir_idx]
 	if _sprite.animation != anim_name:
 		_sprite.play(anim_name)

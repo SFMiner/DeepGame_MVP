@@ -20,8 +20,11 @@ enum State { IDLE, WANDERING, CHASING, FLEEING, KITING }
 @export var preferred_distance: float = 200.0
 @export var projectile_speed: float = 200.0
 @export var fire_cooldown: float = 2.0
+@export var knockback_strength: float = 150.0
+@export var knockback_decay: float = 5.0
 
 @export var slime_color: String = "red"
+@export var projectile_data: ProjectileData
 
 var _current_state: State = State.IDLE
 var _origin: Vector2 = Vector2.ZERO
@@ -33,6 +36,9 @@ var _fire_timer: float = 0.0
 var _player: Player = null
 var _is_dead: bool = false
 var _nav_agent: NavigationAgent2D
+var _knockback_velocity: Vector2 = Vector2.ZERO
+var _active_statuses: Array[StatusEffect] = []
+var _status_timers: Array[float] = []
 
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var _collision_shape: CollisionShape2D = $CollisionShape2D
@@ -54,6 +60,14 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	_attack_timer = maxf(0.0, _attack_timer - delta)
 	_fire_timer = maxf(0.0, _fire_timer - delta)
+	_process_statuses(delta)
+	_process_knockback(delta)
+
+	if _is_stunned():
+		velocity = _knockback_velocity
+		move_and_slide()
+		_update_animation(delta)
+		return
 
 	match _current_state:
 		State.IDLE:
@@ -67,6 +81,7 @@ func _physics_process(delta: float) -> void:
 		State.KITING:
 			_state_kiting(delta)
 
+	velocity += _knockback_velocity
 	move_and_slide()
 	_update_animation(delta)
 	_check_combat_collisions()
@@ -93,13 +108,19 @@ func _attack_player() -> void:
 	var actual: int = _player.stats.take_damage(damage, is_crit)
 	_attack_timer = attack_cooldown
 	EventBus.damage_dealt.emit(stats.character_name, _player.stats.character_name, actual, _player.global_position, is_crit)
+	_player.apply_knockback(global_position, knockback_strength)
 
 func _fire_projectile(direction: Vector2) -> void:
 	var proj: Projectile = Projectile.new()
-	proj.damage = stats.attack
-	proj.direction = direction
-	proj.speed = projectile_speed
-	proj.attacker_name = stats.character_name
+	if projectile_data:
+		proj.set_projectile_data(projectile_data)
+		proj.direction = direction
+		proj.attacker_name = stats.character_name
+	else:
+		proj.damage = stats.attack
+		proj.direction = direction
+		proj.speed = projectile_speed
+		proj.attacker_name = stats.character_name
 	get_parent().add_child(proj)
 	proj.global_position = global_position + direction * 16.0
 
@@ -120,7 +141,7 @@ func _state_wandering(delta: float) -> void:
 	if global_position.distance_to(_origin) > wander_range or _wander_timer >= wander_interval:
 		_enter_idle()
 		return
-	velocity = _wander_direction * wander_speed
+	velocity = _wander_direction * get_effective_speed()
 
 func _state_chasing(_delta: float) -> void:
 	_check_flee_condition()
@@ -135,7 +156,7 @@ func _state_chasing(_delta: float) -> void:
 		return
 	_nav_agent.target_position = _player.global_position
 	var next_pos: Vector2 = _nav_agent.get_next_path_position()
-	velocity = global_position.direction_to(next_pos) * chase_speed
+	velocity = global_position.direction_to(next_pos) * get_effective_speed()
 
 func _state_fleeing(_delta: float) -> void:
 	if not _player:
@@ -151,7 +172,7 @@ func _state_fleeing(_delta: float) -> void:
 		return
 	_nav_agent.target_position = global_position - to_player.normalized() * flee_distance
 	var next_pos: Vector2 = _nav_agent.get_next_path_position()
-	velocity = global_position.direction_to(next_pos) * chase_speed
+	velocity = global_position.direction_to(next_pos) * get_effective_speed()
 
 func _state_kiting(_delta: float) -> void:
 	_check_flee_condition()
@@ -168,11 +189,11 @@ func _state_kiting(_delta: float) -> void:
 	if distance < preferred_distance * 0.7:
 		_nav_agent.target_position = global_position - dir_to_player * preferred_distance
 		var next_pos: Vector2 = _nav_agent.get_next_path_position()
-		velocity = global_position.direction_to(next_pos) * chase_speed
+		velocity = global_position.direction_to(next_pos) * get_effective_speed()
 	elif distance > preferred_distance * 1.3:
 		_nav_agent.target_position = _player.global_position
 		var next_pos: Vector2 = _nav_agent.get_next_path_position()
-		velocity = global_position.direction_to(next_pos) * chase_speed
+		velocity = global_position.direction_to(next_pos) * get_effective_speed()
 	else:
 		velocity = Vector2.ZERO
 		if _fire_timer <= 0.0:
@@ -181,6 +202,49 @@ func _state_kiting(_delta: float) -> void:
 
 	if distance > aggro_range * 2.0:
 		_enter_idle()
+
+func apply_knockback(from_position: Vector2, strength: float) -> void:
+	var direction: Vector2 = global_position.direction_to(from_position)
+	_knockback_velocity = direction * strength
+
+func _process_knockback(delta: float) -> void:
+	if _knockback_velocity.length() < 1.0:
+		_knockback_velocity = Vector2.ZERO
+		return
+	_knockback_velocity = _knockback_velocity.move_toward(Vector2.ZERO, knockback_decay * _knockback_velocity.length() * delta)
+
+func apply_status_effect(effect: StatusEffect) -> void:
+	_active_statuses.append(effect)
+	_status_timers.append(effect.duration)
+	EventBus.status_applied.emit(stats.character_name if stats else "Enemy", effect.effect_type)
+
+func _process_statuses(delta: float) -> void:
+	if _active_statuses.is_empty():
+		return
+	for i: int in range(_active_statuses.size() - 1, -1, -1):
+		var effect: StatusEffect = _active_statuses[i]
+		_status_timers[i] -= delta
+		if effect.effect_type == StatusEffect.EffectType.POISON:
+			if fmod(effect.duration - _status_timers[i], effect.tick_interval) < delta:
+				stats.take_damage(effect.damage_per_tick)
+		if _status_timers[i] <= 0.0:
+			_active_statuses.remove_at(i)
+			_status_timers.remove_at(i)
+
+func _is_stunned() -> bool:
+	for effect: StatusEffect in _active_statuses:
+		if effect.effect_type == StatusEffect.EffectType.STUN:
+			return true
+	return false
+
+func get_effective_speed() -> float:
+	var base: float = wander_speed
+	if _current_state == State.CHASING or _current_state == State.FLEEING or _current_state == State.KITING:
+		base = chase_speed
+	for effect: StatusEffect in _active_statuses:
+		if effect.effect_type == StatusEffect.EffectType.SLOW:
+			return base * effect.speed_multiplier
+	return base
 
 func _check_aggro() -> void:
 	if _is_dead:
