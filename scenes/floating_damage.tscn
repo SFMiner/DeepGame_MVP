@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3 uid="uid://fdam0000001"]
+
+[ext_resource type="Script" uid="uid://fdamsc0001" path="res://scripts/FloatingDamage.gd" id="1_fdam"]
+
+[node name="FloatingDamage" type="Label"]
+anchors_preset = 0
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = -30.0
+offset_top = -10.0
+offset_right = 30.0
+offset_bottom = 10.0
+grow_horizontal = 1
+grow_vertical = 1
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("1_fdam")

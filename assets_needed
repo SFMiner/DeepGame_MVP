@@ -1,0 +1,27 @@
+# Assets Needed for Basic RPG
+
+## Character Sprites
+- Player spritesheet: 32x32px humanoid character spritesheet. Animations: idle (4 frames), walk (4 frames). 4-directional (up/down/left/right). Simple pixel-art style.
+- Enemy spritesheet: 32x32px monster/slime spritesheet. Animations: idle (2 frames), walk (4 frames). Simple pixel-art style.
+
+## Tilemap
+- Dungeon tileset: 32x32px tileset for interior environments. Tiles: stone floor (center + variants), stone wall (top + sides), decorative elements (torch, cracks).
+
+## UI Elements
+- Health bar frame: 16x16px 9-slice border for health bar background
+- Inventory slot: 32x32px icon background for item slots
+- Button sprite: Simple rounded rectangle for UI buttons
+
+## Sound Effects
+- Hit/hurt sound: Short impact sound effect when character takes damage. 0.2s duration.
+- Level up sound: Bright ascending chime for level up notification. 0.5s duration.
+- Item pickup sound: Short "pickup" blip. 0.1s duration.
+- Death sound: Low frequency descending tone. 0.5s duration.
+
+## Music
+- Main theme: Ambient dungeon exploration music with loop. Moody, atmospheric electronic.
+
+## Font
+- Pixel font: 16px monospace pixel-art font for UI and damage numbers. (e.g., "Pixelify Sans" or similar free pixel font)
+
+All assets should be in a pixel-art style consistent with classic 16-bit CRPGs. Use 32x32 as the base tile size.
