@@ -173,8 +173,9 @@ func _on_player_died() -> void:
 	_add_log_entry("[color=red]YOU DIED[/color]")
 	_game_over_panel.visible = true
 
-func _on_damage_dealt(attacker_name: String, defender_name: String, damage: int, _world_position: Vector2) -> void:
-	_add_log_entry(attacker_name + " dealt " + str(damage) + " damage to " + defender_name)
+func _on_damage_dealt(attacker_name: String, defender_name: String, damage: int, _world_position: Vector2, is_crit: bool = false) -> void:
+	var crit_str: String = " [CRIT]" if is_crit else ""
+	_add_log_entry(attacker_name + " dealt " + str(damage) + " damage to " + defender_name + crit_str)
 	_update_defeat_count()
 
 func _on_enemy_defeated(enemy_name: String) -> void:

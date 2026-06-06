@@ -36,5 +36,5 @@ func _on_body_entered(body: Node2D) -> void:
 	if body is Player:
 		if body.stats:
 			var actual: int = body.stats.take_damage(damage)
-			EventBus.damage_dealt.emit(attacker_name, body.stats.character_name, actual, body.global_position)
+			EventBus.damage_dealt.emit(attacker_name, body.stats.character_name, actual, body.global_position, false)
 		queue_free()

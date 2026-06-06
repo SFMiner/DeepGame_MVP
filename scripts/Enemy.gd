@@ -32,6 +32,7 @@ var _attack_timer: float = 0.0
 var _fire_timer: float = 0.0
 var _player: Player = null
 var _is_dead: bool = false
+var _nav_agent: NavigationAgent2D
 
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var _collision_shape: CollisionShape2D = $CollisionShape2D
@@ -40,6 +41,11 @@ func _ready() -> void:
 	_origin = global_position
 	_player = get_tree().get_first_node_in_group("player") as Player
 	_setup_animations()
+	if not _nav_agent:
+		_nav_agent = NavigationAgent2D.new()
+		add_child(_nav_agent)
+	_nav_agent.path_desired_distance = 4.0
+	_nav_agent.target_desired_distance = 4.0
 	if stats:
 		stats = stats.duplicate() as CharacterStats
 		stats.died.connect(_on_stats_died)
@@ -82,10 +88,11 @@ func _check_combat_collisions() -> void:
 func _attack_player() -> void:
 	if not stats or not _player.stats:
 		return
+	var is_crit: bool = randf() < stats.crit_chance
 	var damage: int = stats.attack
-	var actual: int = _player.stats.take_damage(damage)
+	var actual: int = _player.stats.take_damage(damage, is_crit)
 	_attack_timer = attack_cooldown
-	EventBus.damage_dealt.emit(stats.character_name, _player.stats.character_name, actual, _player.global_position)
+	EventBus.damage_dealt.emit(stats.character_name, _player.stats.character_name, actual, _player.global_position, is_crit)
 
 func _fire_projectile(direction: Vector2) -> void:
 	var proj: Projectile = Projectile.new()
@@ -122,11 +129,13 @@ func _state_chasing(_delta: float) -> void:
 	if not _player:
 		_enter_idle()
 		return
-	var direction: Vector2 = global_position.direction_to(_player.global_position)
-	velocity = direction * chase_speed
 	var dist_to_player: float = global_position.distance_to(_player.global_position)
 	if dist_to_player > aggro_range * 2.0:
 		_enter_idle()
+		return
+	_nav_agent.target_position = _player.global_position
+	var next_pos: Vector2 = _nav_agent.get_next_path_position()
+	velocity = global_position.direction_to(next_pos) * chase_speed
 
 func _state_fleeing(_delta: float) -> void:
 	if not _player:
@@ -140,8 +149,9 @@ func _state_fleeing(_delta: float) -> void:
 	if distance >= flee_distance:
 		velocity = Vector2.ZERO
 		return
-	var direction: Vector2 = -to_player.normalized()
-	velocity = direction * chase_speed
+	_nav_agent.target_position = global_position - to_player.normalized() * flee_distance
+	var next_pos: Vector2 = _nav_agent.get_next_path_position()
+	velocity = global_position.direction_to(next_pos) * chase_speed
 
 func _state_kiting(_delta: float) -> void:
 	_check_flee_condition()
@@ -156,9 +166,13 @@ func _state_kiting(_delta: float) -> void:
 	var dir_to_player: Vector2 = to_player.normalized()
 
 	if distance < preferred_distance * 0.7:
-		velocity = -dir_to_player * chase_speed
+		_nav_agent.target_position = global_position - dir_to_player * preferred_distance
+		var next_pos: Vector2 = _nav_agent.get_next_path_position()
+		velocity = global_position.direction_to(next_pos) * chase_speed
 	elif distance > preferred_distance * 1.3:
-		velocity = dir_to_player * chase_speed
+		_nav_agent.target_position = _player.global_position
+		var next_pos: Vector2 = _nav_agent.get_next_path_position()
+		velocity = global_position.direction_to(next_pos) * chase_speed
 	else:
 		velocity = Vector2.ZERO
 		if _fire_timer <= 0.0:

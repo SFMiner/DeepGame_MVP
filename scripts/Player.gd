@@ -10,6 +10,7 @@ var _attack_cooldown: float = 0.0
 var _is_dead: bool = false
 var _nearby_items: Array[ItemPickup] = []
 var _last_facing: int = 0
+var _sprite_set: String = "Beastmaster"
 
 @onready var _sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var _collision_shape: CollisionShape2D = $CollisionShape2D
@@ -96,9 +97,10 @@ func _try_pickup_item() -> void:
 func _attack_enemy(enemy: Enemy) -> void:
 	if not stats or not enemy.stats:
 		return
+	var is_crit: bool = randf() < stats.crit_chance
 	var damage: int = stats.attack
-	var actual: int = enemy.stats.take_damage(damage)
-	EventBus.damage_dealt.emit(stats.character_name, enemy.stats.character_name, actual, enemy.global_position)
+	var actual: int = enemy.stats.take_damage(damage, is_crit)
+	EventBus.damage_dealt.emit(stats.character_name, enemy.stats.character_name, actual, enemy.global_position, is_crit)
 	if not enemy.stats.is_alive():
 		EventBus.enemy_defeated.emit(enemy.stats.character_name)
 		GameState.defeat_count += 1
@@ -128,16 +130,24 @@ func _on_stats_died() -> void:
 	EventBus.player_died.emit()
 	EventBus.game_message.emit("Player has been defeated!")
 
-const CHAR_PATH: String = "res://assets/spritesheets_player/Beastmaster"
+const CHAR_BASE_PATH: String = "res://assets/spritesheets_player/"
 const DIR_NAMES: Array[String] = ["down", "left", "right", "up"]
+
+func update_sprite_set(sprite_set: String) -> void:
+	_sprite_set = sprite_set
+	_setup_animations()
+
+func get_sprite_set() -> String:
+	return _sprite_set
 
 func _setup_animations() -> void:
 	var frames: SpriteFrames = SpriteFrames.new()
-	_load_spritesheet(frames, "idle", CHAR_PATH + "_idle.png", 4)
-	_load_spritesheet(frames, "walk", CHAR_PATH + "_walk.png", 4)
-	_load_spritesheet(frames, "melee", CHAR_PATH + "_melee.png", 4)
-	_load_spritesheet(frames, "hit", CHAR_PATH + "_hit.png", 2)
-	_load_spritesheet(frames, "die", CHAR_PATH + "_die.png", 1)
+	var char_path: String = CHAR_BASE_PATH + _sprite_set
+	_load_spritesheet(frames, "idle", char_path + "_idle.png", 4)
+	_load_spritesheet(frames, "walk", char_path + "_walk.png", 4)
+	_load_spritesheet(frames, "melee", char_path + "_melee.png", 4)
+	_load_spritesheet(frames, "hit", char_path + "_hit.png", 2)
+	_load_spritesheet(frames, "die", char_path + "_die.png", 1)
 	_sprite.sprite_frames = frames
 	_sprite.play("idle_down")
 
