@@ -36,6 +36,7 @@ var _settings_open: bool = false
 var _permadeath_check: CheckBox
 
 func _ready() -> void:
+	process_mode = PROCESS_MODE_ALWAYS
 	_create_ui()
 
 	EventBus.player_hp_changed.connect(_on_player_hp_changed)
@@ -423,24 +424,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.echo:
 		return
 	if event.is_action_pressed("pause"):
-		if _settings_panel.visible:
-			_settings_panel.visible = false
-			return
-		if _inventory_open:
-			_inventory_open = false
-			_inventory_panel.visible = false
-			_equip_panel.visible = false
-			_tooltip_label.visible = false
-			_spell_bar_panel.visible = false
-			for btn: Button in _inventory_buttons:
-				btn.visible = false
-			for label: Label in _spell_labels:
-				label.visible = false
-			return
-		_pause_open = not _pause_open
-		_pause_panel.visible = _pause_open
-		_settings_panel.visible = false
-		get_tree().paused = _pause_open
+		_handle_pause()
 		return
 
 	if event.is_action_pressed("inventory"):
@@ -460,6 +444,30 @@ func _input(event: InputEvent) -> void:
 
 	if _inventory_open and event is InputEventKey and event.pressed and event.keycode == KEY_X:
 		_try_drop_selected()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("pause"):
+		_handle_pause()
+
+func _handle_pause() -> void:
+	if _settings_panel.visible:
+		_settings_panel.visible = false
+		return
+	if _inventory_open:
+		_inventory_open = false
+		_inventory_panel.visible = false
+		_equip_panel.visible = false
+		_tooltip_label.visible = false
+		_spell_bar_panel.visible = false
+		for btn: Button in _inventory_buttons:
+			btn.visible = false
+		for label: Label in _spell_labels:
+			label.visible = false
+		return
+	_pause_open = not _pause_open
+	_pause_panel.visible = _pause_open
+	_settings_panel.visible = false
+	get_tree().paused = _pause_open
 
 func _refresh_inventory() -> void:
 	for btn: Button in _inventory_buttons:
