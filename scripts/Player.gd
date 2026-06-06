@@ -51,7 +51,7 @@ func _ready() -> void:
 func _setup_melee_hitbox() -> void:
 	_melee_hitbox = Area2D.new()
 	_melee_hitbox.collision_layer = 0
-	_melee_hitbox.collision_mask = 2
+	_melee_hitbox.collision_mask = 1
 	var shape: CollisionShape2D = CollisionShape2D.new()
 	var rect: RectangleShape2D = RectangleShape2D.new()
 	rect.size = Vector2(melee_range, 30)
@@ -102,6 +102,8 @@ func _process_attack_state(delta: float) -> void:
 				_atk_state = AtkState.IDLE
 
 func _check_attack_input() -> void:
+	if get_tree().paused:
+		return
 	if _atk_state != AtkState.IDLE:
 		return
 	if Input.is_action_just_pressed("attack_melee"):
@@ -122,15 +124,15 @@ func _start_melee_attack() -> void:
 func _do_strike() -> void:
 	_atk_state = AtkState.STRIKE
 	_atk_state_timer = strike_duration
-	_melee_hitbox.position = Vector2(melee_range if _last_facing == 2 else -melee_range if _last_facing == 1 else 0, melee_range if _last_facing == 0 else -melee_range if _last_facing == 3 else 0)
-	_melee_hitbox.rotation = 0.0 if _last_facing < 2 else PI
 	_melee_hitbox.monitoring = true
-	var bodies: Array[Node2D] = _melee_hitbox.get_overlapping_bodies()
-	for body: Node2D in bodies:
-		if body is Enemy:
-			var enemy: Enemy = body as Enemy
-			if enemy and enemy.stats and enemy.stats.is_alive():
-				_deal_damage_to_enemy(enemy)
+	var enemies: Array[Node] = get_tree().get_nodes_in_group("enemies")
+	for enemy: Node in enemies:
+		if enemy is Enemy:
+			var e: Enemy = enemy as Enemy
+			if e.stats and e.stats.is_alive():
+				var to_enemy: Vector2 = e.global_position - global_position
+				if to_enemy.length() <= melee_range:
+					_deal_damage_to_enemy(e)
 
 func _do_recovery() -> void:
 	_atk_state = AtkState.RECOVERY
