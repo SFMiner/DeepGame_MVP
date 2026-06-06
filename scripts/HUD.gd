@@ -418,6 +418,8 @@ func _on_restart_pressed() -> void:
 	get_tree().reload_current_scene()
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.echo:
+		return
 	if event.is_action_pressed("pause"):
 		if _inventory_open:
 			_inventory_open = false
