@@ -17,6 +17,7 @@ var _inventory: Array[ItemData] = []
 var _equipment: Dictionary = {}
 var _equipped_spells: Array[SpellData] = []
 var _spell_cooldowns: Array[float] = []
+var _ranged_cooldown: float = 0.0
 var _attack_cooldown: float = 0.0
 var _is_dead: bool = false
 var _nearby_items: Array[ItemPickup] = []
@@ -83,6 +84,7 @@ func _physics_process(delta: float) -> void:
 	_process_knockback(delta)
 	_process_attack_state(delta)
 	_process_spell_cooldowns(delta)
+	_ranged_cooldown = maxf(0.0, _ranged_cooldown - delta)
 
 	if _atk_state == AtkState.IDLE or _atk_state == AtkState.STRIKE:
 		velocity = _input_direction * get_effective_speed()
@@ -152,7 +154,37 @@ func _do_recovery() -> void:
 	_melee_hitbox.monitoring = false
 
 func _start_ranged_attack() -> void:
-	pass
+	if _ranged_cooldown > 0.0:
+		return
+	var has_bow: bool = false
+	var weapon: ItemData = _equipment.get("weapon")
+	if weapon and weapon.item_type == ItemData.ItemType.BOW:
+		has_bow = true
+	if not has_bow:
+		EventBus.game_message.emit("Bow required for ranged attacks")
+		return
+	if not stats:
+		return
+	_ranged_cooldown = 0.5
+	var dir: Vector2 = Vector2.DOWN
+	match _last_facing:
+		0: dir = Vector2.DOWN
+		1: dir = Vector2.LEFT
+		2: dir = Vector2.RIGHT
+		3: dir = Vector2.UP
+	var arrow_data: ProjectileData = ProjectileData.new()
+	arrow_data.damage = stats.attack
+	arrow_data.speed = 400.0
+	arrow_data.range = 300.0
+	arrow_data.color = Color(0.8, 0.7, 0.4, 1.0)
+	arrow_data.size = 3.0
+	var proj: Projectile = Projectile.new()
+	proj.set_projectile_data(arrow_data)
+	proj.attacker_name = stats.character_name
+	proj.direction = dir
+	proj._targets_enemies = true
+	get_parent().add_child(proj)
+	proj.global_position = global_position + dir * 20.0
 
 func cast_spell(index: int) -> void:
 	if index < 0 or index >= _equipped_spells.size():
