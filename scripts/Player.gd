@@ -77,6 +77,8 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector2.ZERO
 		return
 
+	_process_mana_regen(delta)
+
 	_process_statuses(delta)
 	_process_knockback(delta)
 	_process_attack_state(delta)
@@ -196,6 +198,11 @@ func cast_spell(index: int) -> void:
 func _process_spell_cooldowns(delta: float) -> void:
 	for i: int in range(_spell_cooldowns.size()):
 		_spell_cooldowns[i] = maxf(0.0, _spell_cooldowns[i] - delta)
+
+func _process_mana_regen(delta: float) -> void:
+	if not stats:
+		return
+	stats.restore_mana(int(ceil(delta * 2.0)))
 
 func _equip_spells_from_data() -> void:
 	if GameState.player_data:
