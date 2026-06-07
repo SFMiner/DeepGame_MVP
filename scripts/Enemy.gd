@@ -47,7 +47,6 @@ func _ready() -> void:
 	_origin = global_position
 	_player = get_tree().get_first_node_in_group("player") as Player
 	_setup_animations()
-	_collision_shape.position = Vector2(0, 48)
 	if not _nav_agent:
 		_nav_agent = NavigationAgent2D.new()
 		add_child(_nav_agent)
