@@ -421,7 +421,8 @@ func _on_all_enemies_defeated() -> void:
 func _on_restart_pressed() -> void:
 	ResourceLoader.load("res://resources/player_stats.tres", "", ResourceLoader.CACHE_MODE_REPLACE)
 	ResourceLoader.load("res://resources/enemy_stats.tres", "", ResourceLoader.CACHE_MODE_REPLACE)
-	GameState.reset_all()
+	GameState.flags.clear()
+	GameState.defeat_count = 0
 	get_tree().reload_current_scene()
 
 func _input(event: InputEvent) -> void:
