@@ -121,7 +121,11 @@ func _check_attack_input() -> void:
 	if _atk_state != AtkState.IDLE:
 		return
 	if Input.is_action_just_pressed("attack_melee"):
-		_start_melee_attack()
+		var weapon: ItemData = _equipment.get("weapon")
+		if weapon and weapon.item_type == ItemData.ItemType.BOW:
+			_start_ranged_attack()
+		else:
+			_start_melee_attack()
 	elif Input.is_action_just_pressed("attack_ranged"):
 		_start_ranged_attack()
 	elif Input.is_action_just_pressed("spell_1"):
