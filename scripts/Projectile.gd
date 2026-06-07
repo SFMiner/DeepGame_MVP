@@ -10,6 +10,7 @@ var _projectile_data: ProjectileData
 var _distance_traveled: float = 0.0
 var _pierce_hit: bool = false
 var _status_effect_on_hit: StatusEffect
+var _targets_enemies: bool = false
 
 func _ready() -> void:
 	collision_layer = 0
@@ -60,11 +61,30 @@ func _physics_process(delta: float) -> void:
 
 func _on_body_entered(body: Node2D) -> void:
 	if body is Player:
+		if _targets_enemies:
+			return
 		if body.stats:
 			var actual: int = body.stats.take_damage(damage)
 			EventBus.damage_dealt.emit(attacker_name, body.stats.character_name, actual, body.global_position, false)
 		if _status_effect_on_hit:
 			(body as Player).apply_status_effect(_status_effect_on_hit)
+		if _projectile_data and _projectile_data.pierce:
+			if not _pierce_hit:
+				_pierce_hit = true
+				return
+		queue_free()
+	elif body is Enemy:
+		if not _targets_enemies:
+			return
+		var enemy: Enemy = body as Enemy
+		if enemy.stats:
+			var actual: int = enemy.stats.take_damage(damage)
+			EventBus.damage_dealt.emit(attacker_name, enemy.stats.character_name, actual, enemy.global_position, false)
+		if _status_effect_on_hit:
+			enemy.apply_status_effect(_status_effect_on_hit)
+		if not enemy.stats.is_alive():
+			EventBus.enemy_defeated.emit(enemy.stats.character_name)
+			GameState.defeat_count += 1
 		if _projectile_data and _projectile_data.pierce:
 			if not _pierce_hit:
 				_pierce_hit = true

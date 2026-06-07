@@ -183,6 +183,7 @@ func cast_spell(index: int) -> void:
 		3: dir = Vector2.UP
 	proj.direction = dir
 	proj._projectile_data = spell.projectile_data
+	proj._targets_enemies = true
 	get_parent().add_child(proj)
 	proj.global_position = global_position + dir * 20.0
 	if spell.status_effect:
