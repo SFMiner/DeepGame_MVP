@@ -250,12 +250,13 @@ func _equip_spells_from_data() -> void:
 func _deal_damage_to_enemy(enemy: Enemy) -> void:
 	if not stats or not enemy.stats:
 		return
+	var was_alive: bool = enemy.stats.is_alive()
 	var is_crit: bool = randf() < stats.crit_chance
 	var damage: int = stats.attack
 	var actual: int = enemy.stats.take_damage(damage, is_crit)
 	EventBus.damage_dealt.emit(stats.character_name, enemy.stats.character_name, actual, enemy.global_position, is_crit)
 	enemy.apply_knockback(global_position, knockback_strength)
-	if not enemy.stats.is_alive():
+	if was_alive and not enemy.stats.is_alive():
 		EventBus.enemy_defeated.emit(enemy.stats.character_name)
 		GameState.defeat_count += 1
 		_grant_xp_for_enemy(enemy.stats.level)

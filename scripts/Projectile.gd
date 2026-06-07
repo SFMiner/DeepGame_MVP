@@ -78,13 +78,14 @@ func _on_body_entered(body: Node2D) -> void:
 			return
 		var enemy: Enemy = body as Enemy
 		if enemy.stats:
+			var was_alive: bool = enemy.stats.is_alive()
 			var actual: int = enemy.stats.take_damage(damage)
 			EventBus.damage_dealt.emit(attacker_name, enemy.stats.character_name, actual, enemy.global_position, false)
-		if _status_effect_on_hit:
-			enemy.apply_status_effect(_status_effect_on_hit)
-		if not enemy.stats.is_alive():
-			EventBus.enemy_defeated.emit(enemy.stats.character_name)
-			GameState.defeat_count += 1
+			if _status_effect_on_hit:
+				enemy.apply_status_effect(_status_effect_on_hit)
+			if was_alive and not enemy.stats.is_alive():
+				EventBus.enemy_defeated.emit(enemy.stats.character_name)
+				GameState.defeat_count += 1
 		if _projectile_data and _projectile_data.pierce:
 			if not _pierce_hit:
 				_pierce_hit = true

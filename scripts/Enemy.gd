@@ -204,7 +204,7 @@ func _state_kiting(_delta: float) -> void:
 		_enter_idle()
 
 func apply_knockback(from_position: Vector2, strength: float) -> void:
-	var direction: Vector2 = global_position.direction_to(from_position)
+	var direction: Vector2 = (global_position - from_position).normalized()
 	_knockback_velocity = direction * strength
 
 func _process_knockback(delta: float) -> void:

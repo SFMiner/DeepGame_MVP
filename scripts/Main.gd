@@ -90,7 +90,12 @@ func _on_damage_dealt(attacker_name: String, defender_name: String, damage: int,
 func _on_enemy_defeated(enemy_name: String) -> void:
 	EventBus.combat_event.emit(enemy_name + " was defeated!")
 	_enemies_defeated += 1
-	if _enemies_defeated >= _total_enemies and _total_enemies > 0:
+	var alive: int = 0
+	for node in get_tree().get_nodes_in_group("enemies"):
+		var e: Enemy = node as Enemy
+		if e and e.stats and e.stats.is_alive():
+			alive += 1
+	if alive <= 0 and _total_enemies > 0:
 		EventBus.all_enemies_defeated.emit()
 
 func spawn_floating_damage(world_position: Vector2, damage: int, is_crit: bool = false) -> void:

@@ -233,7 +233,7 @@ func _create_inventory_grid() -> void:
 
 func _create_spell_bar() -> void:
 	_spell_bar_panel = Panel.new()
-	_spell_bar_panel.position = Vector2(10, 190)
+	_spell_bar_panel.position = Vector2(10, 225)
 	_spell_bar_panel.size = Vector2(300, 24)
 	_spell_bar_panel.modulate = Color(0.05, 0.05, 0.15, 0.8)
 	add_child(_spell_bar_panel)
@@ -241,7 +241,7 @@ func _create_spell_bar() -> void:
 	for i: int in range(3):
 		var label: Label = Label.new()
 		label.text = str(i + 1) + ": -"
-		label.position = Vector2(14 + i * 95, 193)
+		label.position = Vector2(14 + i * 95, 228)
 		label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.8, 1.0))
 		label.add_theme_font_size_override("font_size", 11)
 		add_child(label)
