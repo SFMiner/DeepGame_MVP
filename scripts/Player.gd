@@ -369,6 +369,9 @@ func _recalc_stats() -> void:
 func get_equipment() -> Dictionary:
 	return _equipment
 
+func get_equipped_spells() -> Array[SpellData]:
+	return _equipped_spells
+
 func get_inventory() -> Array[ItemData]:
 	return _inventory
 

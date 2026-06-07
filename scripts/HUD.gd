@@ -233,17 +233,17 @@ func _create_inventory_grid() -> void:
 
 func _create_spell_bar() -> void:
 	_spell_bar_panel = Panel.new()
-	_spell_bar_panel.position = Vector2(535, 270)
-	_spell_bar_panel.size = Vector2(255, 14)
+	_spell_bar_panel.position = Vector2(10, 190)
+	_spell_bar_panel.size = Vector2(300, 24)
 	_spell_bar_panel.modulate = Color(0.05, 0.05, 0.15, 0.8)
 	add_child(_spell_bar_panel)
 
 	for i: int in range(3):
 		var label: Label = Label.new()
 		label.text = str(i + 1) + ": -"
-		label.position = Vector2(538 + i * 85, 271)
+		label.position = Vector2(14 + i * 95, 193)
 		label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.8, 1.0))
-		label.add_theme_font_size_override("font_size", 10)
+		label.add_theme_font_size_override("font_size", 11)
 		add_child(label)
 		_spell_labels.append(label)
 
@@ -432,14 +432,12 @@ func _input(event: InputEvent) -> void:
 		_inventory_panel.visible = _inventory_open
 		_equip_panel.visible = _inventory_open
 		_tooltip_label.visible = false
-		for label: Label in _spell_labels:
-			label.visible = _inventory_open
-		_spell_bar_panel.visible = _inventory_open
 		for btn: Button in _inventory_buttons:
 			btn.visible = _inventory_open
 		if _inventory_open:
 			_refresh_inventory()
 			_refresh_equip_slots()
+		_refresh_spells()
 		return
 
 	if _inventory_open and event is InputEventKey and event.pressed and event.keycode == KEY_X:
@@ -454,11 +452,8 @@ func _handle_pause() -> void:
 		_inventory_panel.visible = false
 		_equip_panel.visible = false
 		_tooltip_label.visible = false
-		_spell_bar_panel.visible = false
 		for btn: Button in _inventory_buttons:
 			btn.visible = false
-		for label: Label in _spell_labels:
-			label.visible = false
 		return
 	_pause_open = not _pause_open
 	_pause_panel.visible = _pause_open
@@ -496,6 +491,19 @@ func _refresh_equip_slots() -> void:
 			btn.text = item.item_name
 		else:
 			btn.text = "(empty)"
+
+func _refresh_spells() -> void:
+	var player: Player = get_tree().get_first_node_in_group("player") as Player
+	if not player:
+		return
+	var spells: Array[SpellData] = player.get_equipped_spells()
+	for i: int in range(3):
+		var label: Label = _spell_labels[i]
+		if i < spells.size() and spells[i]:
+			var spell: SpellData = spells[i]
+			label.text = str(i + 1) + ": " + spell.spell_name + " (" + str(spell.mana_cost) + "MP)"
+		else:
+			label.text = str(i + 1) + ": -"
 
 func _on_item_clicked(index: int) -> void:
 	var player: Player = get_tree().get_first_node_in_group("player") as Player
