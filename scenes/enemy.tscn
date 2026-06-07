@@ -4,7 +4,7 @@
 [ext_resource type="Resource" uid="uid://estats000001" path="res://resources/enemy_stats.tres" id="2_estats"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_enemy"]
-radius = 12.0
+radius = 24.0
 
 [node name="Enemy" type="CharacterBody2D"]
 script = ExtResource("1_enemy")
@@ -14,4 +14,5 @@ enemy_category = 2
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 32)
 shape = SubResource("CircleShape2D_enemy")
