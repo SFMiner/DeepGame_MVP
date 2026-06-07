@@ -12,7 +12,7 @@ stats = ExtResource("2_estats")
 enemy_category = 2
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
-offset = Vector2(0, -12)
+offset = Vector2(0, -10)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_enemy")
