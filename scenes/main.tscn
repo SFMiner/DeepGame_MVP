@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bnwgxei46unhf"]
+[gd_scene load_steps=11 format=3 uid="uid://bnwgxei46unhf"]
 
 [ext_resource type="Script" uid="uid://mainsc0001" path="res://scripts/Main.gd" id="1_main"]
 [ext_resource type="Script" uid="uid://hudsc00001" path="res://scripts/HUD.gd" id="2_hud"]
@@ -9,6 +9,7 @@
 [ext_resource type="Resource" uid="uid://lthrarmr01" path="res://resources/leather_armor.tres" id="7_leather_armor"]
 [ext_resource type="Resource" uid="uid://strngkey01" path="res://resources/strange_key.tres" id="8_strange_key"]
 [ext_resource type="Resource" uid="uid://istf0000001" path="res://resources/oak_staff.tres" id="9_oak_staff"]
+[ext_resource type="Resource" uid="uid://ibow0000001" path="res://resources/short_bow.tres" id="10_short_bow"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -47,6 +48,10 @@ item_data = ExtResource("8_strange_key")
 [node name="OakStaff" parent="." instance=ExtResource("5_item_pickup")]
 position = Vector2(180, -40)
 item_data = ExtResource("9_oak_staff")
+
+[node name="ShortBow" parent="." instance=ExtResource("5_item_pickup")]
+position = Vector2(240, -40)
+item_data = ExtResource("10_short_bow")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("2_hud")
